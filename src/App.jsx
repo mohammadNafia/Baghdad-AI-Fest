@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { openGoogleCalendar } from '@/utils/calendarExport.js';
 import { 
   Calendar, 
   MapPin, 
@@ -23,14 +24,25 @@ import {
   Building2,
   Cpu,
   Radio,
-  UserPlus
+  UserPlus,
+  MessageCircle,
+  Sun,
+  Moon,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  User,
+  LogIn,
+  UserPlus as UserPlusIcon,
+  ArrowUp
 } from 'lucide-react';
 
 // --- TRANSLATIONS ---
 
 const CONTENT = {
   en: {
-    nav: { home: 'Home', about: 'About', agenda: 'Agenda', ecosystem: 'Ecosystem', register: 'Register Now' },
+    nav: { home: 'Home', about: 'About', agenda: 'Agenda', ecosystem: 'Ecosystem', register: 'Register Now', signIn: 'Sign In' },
     hero: {
       date: "Oct 15-17, 2026 • Baghdad Int'l Fairground",
       title_prefix: "Bridging",
@@ -69,10 +81,80 @@ const CONTENT = {
       topics: "Proposed Topics",
       submit: "Submit Registration",
       success: "Registration Received!"
+    },
+    chatbot: {
+      title: "AI Assistant",
+      welcome: "How can I help you today?",
+      faq_event_date: "Event date & time",
+      faq_location: "Location",
+      faq_register: "How to register",
+      faq_speaker: "Speaker application",
+      faq_partnership: "Partnership opportunities",
+      placeholder: "Type your question...",
+      quickQuestions: [
+        "Event date & time",
+        "Location & venue",
+        "How to register",
+        "Speaker application",
+        "Partnership opportunities"
+      ],
+      cannedAnswers: {
+        event_date: "The Baghdad AI Summit 2026 will take place from October 15-17, 2026 at the Baghdad International Fairground. Registration opens at 9:00 AM each day.",
+        location: "The summit will be held at the Baghdad International Fairground, located in the heart of Baghdad. Detailed directions and parking information will be sent to registered attendees.",
+        register: "You can register by clicking the 'Register Now' button in the navigation bar. Fill out the registration form with your details, and you'll receive a confirmation email shortly.",
+        speaker: "To apply as a speaker, visit the Ecosystem page and click on the 'Speakers' card. Fill out the speaker application form with your proposed topics and experience.",
+        partnership: "For partnership opportunities, visit the Ecosystem page and select the relevant partnership type (Sponsor, Exhibitor, Media, etc.). Our team will review your application and contact you.",
+        default: "Thanks! A member of the Baghdad AI Summit team will contact you soon."
+      }
+    },
+    auth: {
+      signIn: "Sign In",
+      createAccount: "Create Account",
+      email: "Email Address",
+      password: "Password",
+      confirmPassword: "Confirm Password",
+      forgotPassword: "Forgot password?",
+      continueWithGoogle: "Continue with Google",
+      name: "Full Name",
+      submit: "Submit",
+      signInTitle: "Welcome back",
+      createAccountTitle: "Join the Summit"
+    },
+    admin: {
+      login: "Admin Login",
+      dashboard: "Dashboard",
+      attendees: "Attendees",
+      speakers: "Speakers",
+      partners: "Partners",
+      logout: "Logout",
+      totalRegistrations: "Total Registrations",
+      totalSpeakers: "Total Speakers",
+      totalPartners: "Total Partnership Requests",
+      dailySubmissions: "Daily Submissions",
+      search: "Search...",
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      dateSubmitted: "Date Submitted",
+      occupation: "Occupation",
+      institution: "Institution",
+      topics: "Topics",
+      organization: "Organization",
+      category: "Category",
+      noData: "No data available",
+      exportCSV: "Export CSV",
+      exportJSON: "Export JSON",
+      page: "Page",
+      of: "of",
+      previous: "Previous",
+      next: "Next",
+      analytics: "Analytics",
+      mostCommonOccupation: "Most Common Occupation",
+      topPartnershipCategory: "Top Partnership Category"
     }
   },
   ar: {
-    nav: { home: 'الرئيسية', about: 'عن القمة', agenda: 'الجدول', ecosystem: 'البيئة التقنية', register: 'سجل الآن' },
+    nav: { home: 'الرئيسية', about: 'عن القمة', agenda: 'الجدول', ecosystem: 'البيئة التقنية', register: 'سجل الآن', signIn: 'تسجيل الدخول' },
     hero: {
       date: "١٥-١٧ أكتوبر ٢٠٢٦ • معرض بغداد الدولي",
       title_prefix: "جسر",
@@ -111,6 +193,76 @@ const CONTENT = {
       topics: "المواضيع المقترحة",
       submit: "إرسال التسجيل",
       success: "تم استلام الطلب!"
+    },
+    chatbot: {
+      title: "مساعد الذكاء الاصطناعي",
+      welcome: "كيف يمكنني مساعدتك اليوم؟",
+      faq_event_date: "تاريخ ووقت الحدث",
+      faq_location: "الموقع",
+      faq_register: "كيفية التسجيل",
+      faq_speaker: "طلب المتحدثين",
+      faq_partnership: "فرص الشراكة",
+      placeholder: "اكتب سؤالك...",
+      quickQuestions: [
+        "تاريخ ووقت الحدث",
+        "الموقع والقاعة",
+        "كيفية التسجيل",
+        "طلب المتحدثين",
+        "فرص الشراكة"
+      ],
+      cannedAnswers: {
+        event_date: "ستقام قمة بغداد للذكاء الاصطناعي 2026 من 15 إلى 17 أكتوبر 2026 في معرض بغداد الدولي. يفتح التسجيل الساعة 9:00 صباحاً كل يوم.",
+        location: "ستقام القمة في معرض بغداد الدولي، الموجود في قلب بغداد. سيتم إرسال الاتجاهات التفصيلية ومعلومات المواقف للمسجلين.",
+        register: "يمكنك التسجيل بالنقر على زر 'سجل الآن' في شريط التنقل. املأ نموذج التسجيل ببياناتك، وستتلقى بريداً إلكترونياً للتأكيد قريباً.",
+        speaker: "للتقديم كمتحدث، زر صفحة البيئة التقنية وانقر على بطاقة 'المتحدثين'. املأ نموذج طلب المتحدثين بمواضيعك المقترحة وخبرتك.",
+        partnership: "لفرص الشراكة، زر صفحة البيئة التقنية واختر نوع الشراكة المناسب (راعي، عارض، إعلامي، إلخ). سيراجع فريقنا طلبك ويتصل بك.",
+        default: "شكراً! سيتصل بك أحد أعضاء فريق قمة بغداد للذكاء الاصطناعي قريباً."
+      }
+    },
+    auth: {
+      signIn: "تسجيل الدخول",
+      createAccount: "إنشاء حساب",
+      email: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      confirmPassword: "تأكيد كلمة المرور",
+      forgotPassword: "نسيت كلمة المرور؟",
+      continueWithGoogle: "المتابعة مع جوجل",
+      name: "الاسم الكامل",
+      submit: "إرسال",
+      signInTitle: "مرحباً بعودتك",
+      createAccountTitle: "انضم إلى القمة"
+    },
+    admin: {
+      login: "تسجيل دخول المشرف",
+      dashboard: "لوحة التحكم",
+      attendees: "المشاركون",
+      speakers: "المتحدثون",
+      partners: "الشركاء",
+      logout: "تسجيل الخروج",
+      totalRegistrations: "إجمالي التسجيلات",
+      totalSpeakers: "إجمالي المتحدثين",
+      totalPartners: "إجمالي طلبات الشراكة",
+      dailySubmissions: "التسجيلات اليومية",
+      search: "بحث...",
+      name: "الاسم",
+      email: "البريد الإلكتروني",
+      phone: "الهاتف",
+      dateSubmitted: "تاريخ الإرسال",
+      occupation: "المهنة",
+      institution: "المؤسسة",
+      topics: "المواضيع",
+      organization: "المنظمة",
+      category: "الفئة",
+      noData: "لا توجد بيانات",
+      exportCSV: "تصدير CSV",
+      exportJSON: "تصدير JSON",
+      page: "صفحة",
+      of: "من",
+      previous: "السابق",
+      next: "التالي",
+      analytics: "التحليلات",
+      mostCommonOccupation: "المهنة الأكثر شيوعاً",
+      topPartnershipCategory: "فئة الشراكة الأكثر طلباً"
     }
   }
 };
@@ -199,7 +351,7 @@ const SummitLogo = ({ className = "w-12 h-12" }) => {
   );
 };
 
-const CountdownTimer = () => {
+const CountdownTimer = ({ theme = 'dark' }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -229,27 +381,620 @@ const CountdownTimer = () => {
     <div className="flex gap-3 md:gap-4 mt-8 justify-start">
       {Object.entries(timeLeft).map(([unit, value]) => (
         <div key={unit} className="text-center">
-          <div className="w-14 h-14 md:w-20 md:h-20 bg-blue-900/20 backdrop-blur-md border border-blue-500/30 rounded-lg flex items-center justify-center">
-            <span className="text-xl md:text-3xl font-bold text-white font-mono">
+          <div className={`w-14 h-14 md:w-20 md:h-20 backdrop-blur-md rounded-lg flex items-center justify-center ${
+            theme === 'light'
+              ? 'bg-blue-100/80 border border-blue-300'
+              : 'bg-blue-900/20 border border-blue-500/30'
+          }`}>
+            <span className={`text-xl md:text-3xl font-bold font-mono ${
+              theme === 'light' ? 'text-gray-900' : 'text-white'
+            }`}>
               {value < 10 ? `0${value}` : value}
             </span>
           </div>
-          <p className="text-[10px] uppercase tracking-widest text-blue-400 mt-2">{unit}</p>
+          <p className={`text-[10px] uppercase tracking-widest mt-2 ${
+            theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+          }`}>{unit}</p>
         </div>
       ))}
     </div>
   );
 };
 
+// --- CHATBOT COMPONENT ---
+
+const Chatbot = ({ t, lang, theme }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const chatRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const faqButtons = [
+    { key: 'faq_event_date', answerKey: 'event_date', icon: Calendar },
+    { key: 'faq_location', answerKey: 'location', icon: MapPin },
+    { key: 'faq_register', answerKey: 'register', icon: UserPlus },
+    { key: 'faq_speaker', answerKey: 'speaker', icon: Mic },
+    { key: 'faq_partnership', answerKey: 'partnership', icon: Handshake }
+  ];
+
+  useEffect(() => {
+    if (isOpen && chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [isOpen, messages]);
+
+  const handleFAQClick = (faq) => {
+    const userMessage = t.chatbot[faq.key];
+    const assistantMessage = t.chatbot.cannedAnswers[faq.answerKey];
+    
+    setMessages(prev => [
+      ...prev,
+      { type: 'user', text: userMessage },
+      { type: 'assistant', text: assistantMessage }
+    ]);
+  };
+
+  const handleSendMessage = () => {
+    if (!inputValue.trim()) return;
+
+    const userMessage = inputValue.trim();
+    setMessages(prev => [...prev, { type: 'user', text: userMessage }]);
+    setInputValue('');
+
+    // Simulate assistant response
+    setTimeout(() => {
+      setMessages(prev => [...prev, { type: 'assistant', text: t.chatbot.cannedAnswers.default }]);
+    }, 500);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  return (
+    <>
+      {/* Chatbot Bubble */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`fixed bottom-6 ${lang === 'ar' ? 'left-6' : 'right-6'} z-50 w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-2xl shadow-blue-500/50 flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+          theme === 'light' ? 'shadow-blue-400/30' : ''
+        }`}
+        aria-label="Open AI Assistant"
+      >
+        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+      </button>
+
+      {/* Chatbot Modal */}
+      {isOpen && (
+        <div className={`fixed ${lang === 'ar' ? 'left-6' : 'right-6'} bottom-24 z-50 w-96 max-w-[calc(100vw-3rem)] ${
+          theme === 'light' 
+            ? 'bg-white/95 backdrop-blur-xl border border-blue-200/50 shadow-2xl' 
+            : 'bg-[#0a0a1a]/95 backdrop-blur-xl border border-blue-500/30 shadow-[0_0_50px_rgba(59,130,246,0.3)]'
+        } rounded-2xl flex flex-col max-h-[500px] transition-all duration-300 animate-slide-up`}>
+          {/* Header */}
+          <div className={`p-4 border-b ${
+            theme === 'light' ? 'border-gray-200 bg-gradient-to-r from-blue-50 to-transparent' : 'border-white/10 bg-gradient-to-r from-blue-900/20 to-transparent'
+          } flex justify-between items-center rounded-t-2xl`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 flex items-center justify-center ${
+                theme === 'light' ? 'shadow-lg' : ''
+              }`}>
+                <Brain size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className={`font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{t.chatbot.title}</h3>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>{t.chatbot.welcome}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className={`p-1.5 rounded-full transition-colors ${
+                theme === 'light' ? 'hover:bg-gray-100 text-gray-600' : 'hover:bg-white/10 text-gray-400 hover:text-white'
+              }`}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar min-h-[200px]">
+            {/* Show FAQ buttons only when no messages */}
+            {messages.length === 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {faqButtons.map((faq, idx) => {
+                  const Icon = faq.icon;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleFAQClick(faq)}
+                      className={`p-3 rounded-xl text-left transition-all hover:scale-105 ${
+                        theme === 'light'
+                          ? 'bg-blue-50 border border-blue-100 hover:bg-blue-100 text-gray-800'
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300'
+                      }`}
+                    >
+                      <Icon size={16} className={`mb-2 ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`} />
+                      <p className="text-xs font-medium">{t.chatbot[faq.key]}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Chat Messages */
+              <div className="space-y-3">
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.type === 'user' ? (lang === 'ar' ? 'justify-start' : 'justify-end') : (lang === 'ar' ? 'justify-end' : 'justify-start')}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                        msg.type === 'user'
+                          ? theme === 'light'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-blue-600 text-white'
+                          : theme === 'light'
+                          ? 'bg-gray-100 text-gray-900 border border-gray-200'
+                          : 'bg-white/10 text-gray-200 border border-white/20'
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className={`p-4 border-t ${
+            theme === 'light' ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-[#0a0a1a]'
+          } rounded-b-2xl`}>
+            <div className={`flex gap-2 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={t.chatbot.placeholder}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm outline-none transition-all ${
+                  theme === 'light'
+                    ? 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                    : 'bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500'
+                }`}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim()}
+                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === 'light'
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white'
+                }`}
+              >
+                <ArrowRight size={16} className={lang === 'ar' ? 'rotate-180' : ''} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
+    </>
+  );
+};
+
+// --- AUTHENTICATION MODAL ---
+
+const AuthModal = ({ onClose, t, lang, theme }) => {
+  const [activeTab, setActiveTab] = useState('signIn');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (activeTab === 'createAccount' && !formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (activeTab === 'createAccount') {
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      setIsSubmitting(true);
+      // Simulate API call
+      setTimeout(() => {
+        setIsSubmitting(false);
+        onClose();
+      }, 1500);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    // UI only - no backend
+    console.log('Google Sign In clicked');
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  return (
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto ${
+      theme === 'light' ? 'bg-black/60' : ''
+    }`}>
+      <div className={`w-full max-w-md ${
+        theme === 'light'
+          ? 'bg-white border border-blue-200/50 shadow-2xl'
+          : 'bg-[#0a0a1a] border border-blue-500/30 shadow-[0_0_50px_rgba(59,130,246,0.2)]'
+      } rounded-2xl flex flex-col max-h-[90vh] my-auto relative overflow-hidden`}>
+        {/* Gradient Border Effect */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 opacity-20 blur-xl -z-10"></div>
+        
+        {/* Header */}
+        <div className={`p-6 border-b ${
+          theme === 'light' ? 'border-gray-200 bg-gradient-to-r from-blue-50 to-transparent' : 'border-white/10 bg-gradient-to-r from-blue-900/20 to-transparent'
+        } flex justify-between items-center flex-shrink-0`}>
+          <h3 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+            {activeTab === 'signIn' ? t.auth.signInTitle : t.auth.createAccountTitle}
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-full transition-colors ${
+              theme === 'light' ? 'hover:bg-gray-100 text-gray-600' : 'hover:bg-white/10 text-gray-400 hover:text-white'
+            }`}
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex border-b ${
+          theme === 'light' ? 'border-gray-200' : 'border-white/10'
+        }`}>
+          <button
+            onClick={() => {
+              setActiveTab('signIn');
+              setErrors({});
+              setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+            }}
+            className={`flex-1 py-4 px-6 font-medium transition-all relative ${
+              activeTab === 'signIn'
+                ? theme === 'light'
+                  ? 'text-blue-600'
+                  : 'text-blue-400'
+                : theme === 'light'
+                ? 'text-gray-600'
+                : 'text-gray-400'
+            }`}
+          >
+            {t.auth.signIn}
+            {activeTab === 'signIn' && (
+              <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                theme === 'light' ? 'bg-blue-600' : 'bg-blue-500'
+              }`}></div>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('createAccount');
+              setErrors({});
+              setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+            }}
+            className={`flex-1 py-4 px-6 font-medium transition-all relative ${
+              activeTab === 'createAccount'
+                ? theme === 'light'
+                  ? 'text-blue-600'
+                  : 'text-blue-400'
+                : theme === 'light'
+                ? 'text-gray-600'
+                : 'text-gray-400'
+            }`}
+          >
+            {t.auth.createAccount}
+            {activeTab === 'createAccount' && (
+              <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                theme === 'light' ? 'bg-blue-600' : 'bg-blue-500'
+              }`}></div>
+            )}
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-8 overflow-y-auto custom-scrollbar">
+          {/* Google Sign In Button */}
+          <button
+            onClick={handleGoogleSignIn}
+            className={`w-full py-3.5 px-4 rounded-lg font-medium text-sm transition-all mb-6 flex items-center justify-center gap-3 ${
+              theme === 'light'
+                ? 'bg-white border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:bg-blue-50'
+                : 'bg-white/5 border-2 border-white/10 hover:border-blue-500/50 text-white hover:bg-white/10'
+            }`}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            <span>{t.auth.continueWithGoogle}</span>
+          </button>
+
+          <div className={`relative mb-6 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'} text-center text-sm`}>
+            <div className={`absolute inset-0 flex items-center ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex-1 border-t ${theme === 'light' ? 'border-gray-300' : 'border-white/10'}`}></div>
+              <span className="px-4">or</span>
+              <div className={`flex-1 border-t ${theme === 'light' ? 'border-gray-300' : 'border-white/10'}`}></div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {activeTab === 'createAccount' && (
+              <div className="space-y-2">
+                <label className={`text-sm font-medium flex items-center gap-2 ${
+                  theme === 'light' ? 'text-gray-700' : 'text-blue-400'
+                }`}>
+                  <User size={14} />
+                  {t.auth.name}
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-4 py-3 rounded-lg transition-all outline-none ${
+                    theme === 'light'
+                      ? errors.name
+                        ? 'bg-white border-2 border-red-400 text-gray-900'
+                        : 'bg-gray-50 border border-gray-300 text-gray-900 focus:border-blue-500'
+                      : errors.name
+                      ? 'bg-black/50 border-2 border-red-500 text-white'
+                      : 'bg-black/50 border border-white/10 text-white focus:border-blue-500'
+                  }`}
+                  placeholder={t.auth.name}
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className={`text-sm font-medium flex items-center gap-2 ${
+                theme === 'light' ? 'text-gray-700' : 'text-blue-400'
+              }`}>
+                <Mail size={14} />
+                {t.auth.email}
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className={`w-full px-4 py-3 rounded-lg transition-all outline-none ${
+                  theme === 'light'
+                    ? errors.email
+                      ? 'bg-white border-2 border-red-400 text-gray-900'
+                      : 'bg-gray-50 border border-gray-300 text-gray-900 focus:border-blue-500'
+                    : errors.email
+                    ? 'bg-black/50 border-2 border-red-500 text-white'
+                    : 'bg-black/50 border border-white/10 text-white focus:border-blue-500'
+                }`}
+                placeholder={t.auth.email}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className={`text-sm font-medium flex items-center gap-2 ${
+                theme === 'light' ? 'text-gray-700' : 'text-blue-400'
+              }`}>
+                <Lock size={14} />
+                {t.auth.password}
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  className={`w-full px-4 py-3 pr-12 rounded-lg transition-all outline-none ${
+                    theme === 'light'
+                      ? errors.password
+                        ? 'bg-white border-2 border-red-400 text-gray-900'
+                        : 'bg-gray-50 border border-gray-300 text-gray-900 focus:border-blue-500'
+                      : errors.password
+                      ? 'bg-black/50 border-2 border-red-500 text-white'
+                      : 'bg-black/50 border border-white/10 text-white focus:border-blue-500'
+                  }`}
+                  placeholder={t.auth.password}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${
+                    theme === 'light' ? 'text-gray-500' : 'text-gray-400'
+                  } hover:opacity-70 transition-opacity`}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            {activeTab === 'createAccount' && (
+              <div className="space-y-2">
+                <label className={`text-sm font-medium flex items-center gap-2 ${
+                  theme === 'light' ? 'text-gray-700' : 'text-blue-400'
+                }`}>
+                  <Lock size={14} />
+                  {t.auth.confirmPassword}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    className={`w-full px-4 py-3 pr-12 rounded-lg transition-all outline-none ${
+                      theme === 'light'
+                        ? errors.confirmPassword
+                          ? 'bg-white border-2 border-red-400 text-gray-900'
+                          : 'bg-gray-50 border border-gray-300 text-gray-900 focus:border-blue-500'
+                        : errors.confirmPassword
+                        ? 'bg-black/50 border-2 border-red-500 text-white'
+                        : 'bg-black/50 border border-white/10 text-white focus:border-blue-500'
+                    }`}
+                    placeholder={t.auth.confirmPassword}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${
+                      theme === 'light' ? 'text-gray-500' : 'text-gray-400'
+                    } hover:opacity-70 transition-opacity`}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'signIn' && (
+              <div className={`flex ${lang === 'ar' ? 'flex-row-reverse justify-start' : 'justify-end'}`}>
+                <button
+                  type="button"
+                  className={`text-sm transition-colors ${
+                    theme === 'light' ? 'text-blue-600 hover:text-blue-700' : 'text-blue-400 hover:text-blue-300'
+                  }`}
+                >
+                  {t.auth.forgotPassword}
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-3.5 px-4 rounded-lg font-bold text-white transition-all mt-6 ${
+                isSubmitting
+                  ? 'bg-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-lg hover:shadow-xl'
+              }`}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  {t.auth.submit}...
+                </span>
+              ) : (
+                t.auth.submit
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- FORMS & MODALS ---
 
-const ModalBase = ({ title, onClose, children }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-    <div className="w-full max-w-2xl bg-[#0a0a1a] border border-blue-500/30 rounded-2xl shadow-[0_0_50px_rgba(59,130,246,0.2)] flex flex-col max-h-[90vh] my-auto">
+const ModalBase = ({ title, onClose, children, theme = 'dark' }) => (
+  <div className={`fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto ${
+    theme === 'light' ? 'bg-black/60' : 'bg-black/80'
+  }`}>
+    <div className={`w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh] my-auto ${
+      theme === 'light'
+        ? 'bg-white border border-blue-200/50 shadow-2xl'
+        : 'bg-[#0a0a1a] border border-blue-500/30 shadow-[0_0_50px_rgba(59,130,246,0.2)]'
+    }`}>
       {/* Header */}
-      <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-900/20 to-transparent flex-shrink-0">
-        <h3 className="text-2xl font-bold text-white mb-1">{title}</h3>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+      <div className={`p-6 border-b flex justify-between items-center flex-shrink-0 rounded-t-2xl ${
+        theme === 'light'
+          ? 'border-gray-200 bg-gradient-to-r from-blue-50 to-transparent'
+          : 'border-white/10 bg-gradient-to-r from-blue-900/20 to-transparent'
+      }`}>
+        <h3 className={`text-2xl font-bold mb-1 ${
+          theme === 'light' ? 'text-gray-900' : 'text-white'
+        }`}>{title}</h3>
+        <button
+          onClick={onClose}
+          className={`p-2 rounded-full transition-colors ${
+            theme === 'light'
+              ? 'hover:bg-gray-100 text-gray-600'
+              : 'hover:bg-white/10 text-gray-400 hover:text-white'
+          }`}
+        >
           <X size={24} />
         </button>
       </div>
@@ -261,47 +1006,69 @@ const ModalBase = ({ title, onClose, children }) => (
   </div>
 );
 
-const GeneralRegistrationForm = ({ onClose, t }) => {
+const GeneralRegistrationForm = ({ onClose, t, theme = 'dark' }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    occupation: '',
+    institution: '',
+    age: '',
+    email: '',
+    phone: '',
+    motivation: ''
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Save to localStorage
+    const existing = JSON.parse(localStorage.getItem('attendees') || '[]');
+    const newEntry = {
+      ...formData,
+      dateSubmitted: new Date().toISOString()
+    };
+    localStorage.setItem('attendees', JSON.stringify([...existing, newEntry]));
     setSubmitted(true);
     setTimeout(onClose, 2000);
   };
 
   if (submitted) {
     return (
-      <ModalBase title={t.forms.general_title} onClose={onClose}>
+      <ModalBase title={t.forms.general_title} onClose={onClose} theme={theme}>
         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
           <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-400">
             <CheckCircle2 size={40} />
           </div>
-          <h3 className="text-2xl font-bold text-white">{t.forms.success}</h3>
-          <p className="text-gray-400">See you in Baghdad!</p>
+          <h3 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{t.forms.success}</h3>
+          <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>See you in Baghdad!</p>
         </div>
       </ModalBase>
     );
   }
 
+  const inputClass = theme === 'light'
+    ? 'w-full bg-gray-50 border border-gray-300 rounded p-3 text-gray-900 focus:border-blue-500 outline-none'
+    : 'w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none';
+  const labelClass = theme === 'light' ? 'text-sm text-blue-600' : 'text-sm text-blue-400';
+
   return (
-    <ModalBase title={t.forms.general_title} onClose={onClose}>
+    <ModalBase title={t.forms.general_title} onClose={onClose} theme={theme}>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.name}</label>
-            <input required type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" />
+            <label className={labelClass}>{t.forms.name}</label>
+            <input required type="text" className={inputClass} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.age}</label>
-            <input required type="number" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" />
+            <label className={labelClass}>{t.forms.age}</label>
+            <input required type="number" className={inputClass} value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.occupation}</label>
-            <select className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none">
+            <label className={labelClass}>{t.forms.occupation}</label>
+            <select className={inputClass} value={formData.occupation} onChange={(e) => setFormData({...formData, occupation: e.target.value})}>
+              <option value="">Select...</option>
               <option>Student</option>
               <option>Employee</option>
               <option>Self-Employed</option>
@@ -310,25 +1077,25 @@ const GeneralRegistrationForm = ({ onClose, t }) => {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.institution}</label>
-            <input required type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" placeholder="University / Company" />
+            <label className={labelClass}>{t.forms.institution}</label>
+            <input required type="text" className={inputClass} placeholder="University / Company" value={formData.institution} onChange={(e) => setFormData({...formData, institution: e.target.value})} />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.email}</label>
-            <input required type="email" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" />
+            <label className={labelClass}>{t.forms.email}</label>
+            <input required type="email" className={inputClass} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-blue-400">{t.forms.phone}</label>
-            <input required type="tel" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" />
+            <label className={labelClass}>{t.forms.phone}</label>
+            <input required type="tel" className={inputClass} value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm text-blue-400">{t.forms.motivation}</label>
-          <textarea required className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none h-24" />
+          <label className={labelClass}>{t.forms.motivation}</label>
+          <textarea required className={`${inputClass} h-24`} value={formData.motivation} onChange={(e) => setFormData({...formData, motivation: e.target.value})} />
         </div>
 
         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg transition-all mt-4">
@@ -339,48 +1106,68 @@ const GeneralRegistrationForm = ({ onClose, t }) => {
   );
 };
 
-const SpeakerRegistrationForm = ({ onClose, t }) => {
+const SpeakerRegistrationForm = ({ onClose, t, theme = 'dark' }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    institution: '',
+    topics: '',
+    experience: '',
+    achievements: ''
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Save to localStorage
+    const existing = JSON.parse(localStorage.getItem('speakers') || '[]');
+    const newEntry = {
+      ...formData,
+      dateSubmitted: new Date().toISOString()
+    };
+    localStorage.setItem('speakers', JSON.stringify([...existing, newEntry]));
     setSubmitted(true);
     setTimeout(onClose, 2000);
   };
 
   if (submitted) {
     return (
-      <ModalBase title={t.forms.speaker_title} onClose={onClose}>
+      <ModalBase title={t.forms.speaker_title} onClose={onClose} theme={theme}>
         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
           <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-400">
             <CheckCircle2 size={40} />
           </div>
-          <h3 className="text-2xl font-bold text-white">{t.forms.success}</h3>
-          <p className="text-gray-400">We will review your proposal.</p>
+          <h3 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{t.forms.success}</h3>
+          <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>We will review your proposal.</p>
         </div>
       </ModalBase>
     );
   }
 
+  const inputClass = theme === 'light'
+    ? 'w-full bg-gray-50 border border-gray-300 rounded p-3 text-gray-900 focus:border-purple-500 outline-none'
+    : 'w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none';
+  const labelClass = theme === 'light' ? 'text-sm text-purple-600' : 'text-sm text-purple-400';
+
   return (
-    <ModalBase title={t.forms.speaker_title} onClose={onClose}>
+    <ModalBase title={t.forms.speaker_title} onClose={onClose} theme={theme}>
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Info */}
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.name}</label>
-            <input required type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" />
+            <label className={labelClass}>{t.forms.name}</label>
+            <input required type="text" className={inputClass} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.age}</label>
-            <input required type="number" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" />
+            <label className={labelClass}>{t.forms.age}</label>
+            <input required type="number" className={inputClass} />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.occupation}</label>
-            <select className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none">
+            <label className={labelClass}>{t.forms.occupation}</label>
+            <select className={inputClass}>
               <option>Student</option>
               <option>Employee</option>
               <option>Self-Employed</option>
@@ -389,49 +1176,49 @@ const SpeakerRegistrationForm = ({ onClose, t }) => {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.institution}</label>
-            <input required type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" placeholder="University / Company" />
+            <label className={labelClass}>{t.forms.institution}</label>
+            <input required type="text" className={inputClass} placeholder="University / Company" />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.email}</label>
-            <input required type="email" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" />
+            <label className={labelClass}>{t.forms.email}</label>
+            <input required type="email" className={inputClass} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-purple-400">{t.forms.phone}</label>
-            <input required type="tel" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" />
+            <label className={labelClass}>{t.forms.phone}</label>
+            <input required type="tel" className={inputClass} />
           </div>
         </div>
 
         {/* Professional Info */}
         <div className="space-y-2">
-          <label className="text-sm text-purple-400">{t.forms.skills}</label>
-          <input required type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" placeholder="e.g. Python, NLP, Robotics" />
+          <label className={labelClass}>{t.forms.skills}</label>
+          <input required type="text" className={inputClass} placeholder="e.g. Python, NLP, Robotics" />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm text-purple-400">{t.forms.experience}</label>
-          <select className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none">
+          <label className={labelClass}>{t.forms.experience}</label>
+          <select className={inputClass}>
             <option value="no">No, this is my first time</option>
             <option value="yes">Yes, I have spoken before</option>
           </select>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm text-purple-400">{t.forms.achievements}</label>
-          <textarea className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none h-20" placeholder="Awards, research papers, major projects..." />
+          <label className={labelClass}>{t.forms.achievements}</label>
+          <textarea className={`${inputClass} h-20`} placeholder="Awards, research papers, major projects..." />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm text-purple-400">{t.forms.topics}</label>
-          <textarea required className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none h-20" placeholder="What do you want to talk about?" />
+          <label className={labelClass}>{t.forms.topics}</label>
+          <textarea required className={`${inputClass} h-20`} placeholder="What do you want to talk about?" />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm text-purple-400">{t.forms.motivation}</label>
-          <textarea required className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none h-20" />
+          <label className={labelClass}>{t.forms.motivation}</label>
+          <textarea required className={`${inputClass} h-20`} />
         </div>
 
         <button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-lg transition-all mt-4">
@@ -457,22 +1244,40 @@ const PARTNERS = [
   { name: "Tech News ME", category: "Media", icon: Radio, color: "text-pink-400" },
 ];
 
-const EcosystemMarquee = () => (
-  <div className="w-full bg-white/5 border-y border-white/10 overflow-hidden py-10 mb-16 relative">
-    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#00040F] to-transparent z-10"></div>
-    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#00040F] to-transparent z-10"></div>
+const EcosystemMarquee = ({ theme }) => (
+  <div className={`w-full border-y overflow-hidden py-10 mb-16 relative transition-colors duration-300 ${
+    theme === 'light'
+      ? 'bg-gray-100/50 border-gray-200'
+      : 'bg-white/5 border-white/10'
+  }`}>
+    <div className={`absolute inset-y-0 left-0 w-32 bg-gradient-to-r z-10 ${
+      theme === 'light' ? 'from-gray-100/50 to-transparent' : 'from-[#00040F] to-transparent'
+    }`}></div>
+    <div className={`absolute inset-y-0 right-0 w-32 bg-gradient-to-l z-10 ${
+      theme === 'light' ? 'from-gray-100/50 to-transparent' : 'from-[#00040F] to-transparent'
+    }`}></div>
     
     <div className="flex w-full">
       <div className="whitespace-nowrap animate-scroll-slow flex gap-16 items-center min-w-full pl-16">
          {/* Tripled list for infinite scroll effect */}
          {[...PARTNERS, ...PARTNERS, ...PARTNERS].map((p, i) => (
-            <div key={i} className="flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-all cursor-pointer group hover:scale-105">
-              <div className={`w-20 h-20 rounded-2xl bg-[#0a0a1a] border border-white/10 flex items-center justify-center shadow-lg group-hover:border-blue-500/50 transition-colors ${p.color}`}>
+            <div key={i} className="flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-all cursor-pointer group hover:scale-105 tilt-3d shine-overlay">
+              <div className={`w-20 h-20 rounded-2xl border flex items-center justify-center shadow-lg group-hover:border-blue-500/50 transition-colors ${p.color} ${
+                theme === 'light'
+                  ? 'bg-white border-gray-200'
+                  : 'bg-[#0a0a1a] border-white/10'
+              }`}>
                  <p.icon size={32} />
               </div>
               <div className="text-center">
-                <span className="block text-white font-bold text-sm tracking-wide">{p.name}</span>
-                <span className="block text-[10px] text-gray-500 uppercase tracking-widest mt-1 bg-white/5 px-2 py-0.5 rounded-full">{p.category}</span>
+                <span className={`block font-bold text-sm tracking-wide ${
+                  theme === 'light' ? 'text-gray-900' : 'text-white'
+                }`}>{p.name}</span>
+                <span className={`block text-[10px] uppercase tracking-widest mt-1 px-2 py-0.5 rounded-full ${
+                  theme === 'light'
+                    ? 'text-gray-600 bg-gray-200'
+                    : 'text-gray-500 bg-white/5'
+                }`}>{p.category}</span>
               </div>
             </div>
          ))}
@@ -495,34 +1300,49 @@ const EcosystemMarquee = () => (
 
 // --- PARTNERSHIP WIZARD ---
 
-const PartnershipWizard = ({ onClose, t }) => {
+const PartnershipWizard = ({ onClose, t, theme = 'dark' }) => {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const totalSteps = 3;
 
+  const [formData, setFormData] = useState({
+    organization: '',
+    email: '',
+    category: '',
+    dateSubmitted: new Date().toISOString()
+  });
+
   const handleFinalSubmit = () => {
+    const existing = JSON.parse(localStorage.getItem('partners') || '[]');
+    localStorage.setItem('partners', JSON.stringify([...existing, formData]));
     setSubmitted(true);
     setTimeout(onClose, 4000);
   };
 
   if (submitted) {
     return (
-      <ModalBase title={t.modal_title} onClose={onClose}>
+      <ModalBase title={t.modal_title} onClose={onClose} theme={theme}>
         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
           <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
             <CheckCircle2 size={40} />
           </div>
-          <h3 className="text-2xl font-bold text-white">Application Received</h3>
-          <p className="text-gray-400">Our sales team will be in contact with you shortly.</p>
+          <h3 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>Application Received</h3>
+          <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Our sales team will be in contact with you shortly.</p>
         </div>
       </ModalBase>
     );
   }
 
+  const inputClass = theme === 'light'
+    ? 'w-full bg-gray-50 border border-gray-300 rounded p-3 text-gray-900 focus:border-blue-500 outline-none'
+    : 'w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none';
+
   return (
-    <ModalBase title={t.modal_title} onClose={onClose}>
+    <ModalBase title={t.modal_title} onClose={onClose} theme={theme}>
         {/* Progress Bar */}
-        <div className="w-full h-1 bg-gray-800 mb-8">
+        <div className={`w-full h-1 mb-8 ${
+          theme === 'light' ? 'bg-gray-200' : 'bg-gray-800'
+        }`}>
           <div 
             className="h-full bg-blue-500 transition-all duration-500"
             style={{ width: `${(step / totalSteps) * 100}%` }}
@@ -535,29 +1355,39 @@ const PartnershipWizard = ({ onClose, t }) => {
             <div className="space-y-6 animate-fade-in">
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Organization Name</label>
-                    <input type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" placeholder="e.g. Babel Tech" />
+                    <label className={`text-sm ${
+                      theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                    }`}>Organization Name</label>
+                    <input type="text" className={inputClass} placeholder="e.g. Babel Tech" />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Website</label>
-                    <input type="text" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" placeholder="https://..." />
+                    <label className={`text-sm ${
+                      theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                    }`}>Website</label>
+                    <input type="text" className={inputClass} placeholder="https://..." />
                  </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Phone Number</label>
-                    <input type="tel" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" placeholder="+964..." />
+                    <label className={`text-sm ${
+                      theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                    }`}>Phone Number</label>
+                    <input type="tel" className={inputClass} placeholder="+964..." />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Contact Email</label>
-                    <input type="email" className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none" placeholder="contact@company.com" />
+                    <label className={`text-sm ${
+                      theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                    }`}>Contact Email</label>
+                    <input type="email" className={inputClass} placeholder="contact@company.com" />
                  </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-gray-400">Partnership Type</label>
-                <select className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none">
+                <label className={`text-sm ${
+                  theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                }`}>Partnership Type</label>
+                <select className={inputClass}>
                   <option>Sponsorship</option>
                   <option>Exhibitor Booth</option>
                   <option>Startup Fundraiser</option>
@@ -569,14 +1399,26 @@ const PartnershipWizard = ({ onClose, t }) => {
 
           {step === 2 && (
             <div className="space-y-8 animate-fade-in text-center py-8">
-              <div className="border-2 border-dashed border-white/20 rounded-xl p-10 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer group">
-                <Upload className="w-12 h-12 text-gray-500 group-hover:text-blue-400 mx-auto mb-4" />
-                <h4 className="text-white font-medium mb-2">Request Details (PDF file)</h4>
-                <p className="text-sm text-gray-500">Requirements & Proposal (Max 10MB)</p>
+              <div className={`border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer group ${
+                theme === 'light'
+                  ? 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  : 'border-white/20 hover:border-blue-500/50 hover:bg-blue-500/5'
+              }`}>
+                <Upload className={`w-12 h-12 mx-auto mb-4 group-hover:text-blue-400 transition-colors ${
+                  theme === 'light' ? 'text-gray-400' : 'text-gray-500'
+                }`} />
+                <h4 className={`font-medium mb-2 ${
+                  theme === 'light' ? 'text-gray-900' : 'text-white'
+                }`}>Request Details (PDF file)</h4>
+                <p className={`text-sm ${
+                  theme === 'light' ? 'text-gray-600' : 'text-gray-500'
+                }`}>Requirements & Proposal (Max 10MB)</p>
               </div>
               <div className="text-left space-y-2">
-                 <label className="text-sm text-gray-400">Special Conditions</label>
-                 <textarea className="w-full bg-black/50 border border-white/10 rounded p-3 text-white focus:border-blue-500 outline-none h-24" placeholder="Any specific booth requirements or conditions?" />
+                 <label className={`text-sm ${
+                   theme === 'light' ? 'text-gray-700' : 'text-gray-400'
+                 }`}>Special Conditions</label>
+                 <textarea className={`${inputClass} h-24`} placeholder="Any specific booth requirements or conditions?" />
               </div>
             </div>
           )}
@@ -587,17 +1429,30 @@ const PartnershipWizard = ({ onClose, t }) => {
                 <CheckCircle2 size={40} />
               </div>
               <div>
-                <h4 className="text-2xl font-bold text-white mb-2">Ready to Submit</h4>
-                <p className="text-gray-400">Review your details. Our sales team will be in contact with you.</p>
+                <h4 className={`text-2xl font-bold mb-2 ${
+                  theme === 'light' ? 'text-gray-900' : 'text-white'
+                }`}>Ready to Submit</h4>
+                <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Review your details. Our sales team will be in contact with you.</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="pt-6 mt-6 border-t border-white/10 flex justify-between items-center">
+        <div className={`pt-6 mt-6 border-t flex justify-between items-center ${
+          theme === 'light' ? 'border-gray-200' : 'border-white/10'
+        }`}>
            {step > 1 ? (
-             <button onClick={() => setStep(s => s-1)} className="text-gray-400 hover:text-white text-sm">Back</button>
+             <button
+               onClick={() => setStep(s => s-1)}
+               className={`text-sm transition-colors ${
+                 theme === 'light'
+                   ? 'text-gray-600 hover:text-blue-600'
+                   : 'text-gray-400 hover:text-white'
+               }`}
+             >
+               Back
+             </button>
            ) : <div></div>}
            
            <button 
@@ -632,15 +1487,19 @@ const AGENDA_ITEMS = [
 
 // --- COMPONENTS ---
 
-const SectionHeading = ({ title, subtitle, align = "center" }) => (
-  <div className={`mb-16 ${align === "left" ? "text-left" : "text-center"}`}>
-    <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">{title}</h2>
-    <div className={`h-1 w-24 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6 ${align === "left" ? "" : "mx-auto"}`}></div>
-    {subtitle && <p className="text-gray-400 text-lg max-w-2xl leading-relaxed font-light">{subtitle}</p>}
+const SectionHeading = ({ title, subtitle, align = "center", theme = 'dark' }) => (
+  <div className={`mb-16 ${align === "left" ? "text-left" : "text-center"} gradient-underline`}>
+    <h2 className={`text-4xl md:text-5xl font-bold tracking-tight mb-4 ${
+      theme === 'light' ? 'text-gray-900' : 'text-white'
+    }`}>{title}</h2>
+    <div className={`h-1 w-24 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6 ${align === "left" ? "" : "mx-auto"} animate-fadeInUp`}></div>
+    {subtitle && <p className={`text-lg max-w-2xl leading-relaxed font-light ${
+      theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+    }`}>{subtitle}</p>}
   </div>
 );
 
-const Navbar = ({ setPage, currentPage, lang, setLang, t, onRegister }) => {
+const Navbar = ({ setPage, currentPage, lang, setLang, t, onRegister, onSignIn, theme, setTheme }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -649,104 +1508,243 @@ const Navbar = ({ setPage, currentPage, lang, setLang, t, onRegister }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? 'bg-[#00040F]/80 backdrop-blur-xl border-white/10 py-2' : 'bg-transparent border-transparent py-6'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
+      theme === 'light'
+        ? scrolled
+          ? 'bg-white/90 backdrop-blur-xl border-gray-200 py-2 md:py-3 lg:py-4 shadow-sm'
+          : 'bg-transparent border-transparent py-4 md:py-5 lg:py-6'
+        : scrolled
+        ? 'bg-[#00040F]/80 backdrop-blur-xl border-white/10 py-2 md:py-3 lg:py-4'
+        : 'bg-transparent border-transparent py-4 md:py-5 lg:py-6'
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-16 flex justify-between items-center">
         <div 
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => setPage('Home')}
         >
           <SummitLogo />
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-white leading-none tracking-wide">BAGHDAD</span>
-            <span className="text-[10px] text-blue-400 tracking-[0.3em] font-bold uppercase mt-1">AI Summit 2026</span>
+            <span className={`font-bold text-lg leading-none tracking-wide ${
+              theme === 'light' ? 'text-gray-900' : 'text-white'
+            }`}>BAGHDAD</span>
+            <span className={`text-[10px] tracking-[0.3em] font-bold uppercase mt-1 ${
+              theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+            }`}>AI Summit 2026</span>
           </div>
         </div>
         
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4">
           {Object.entries(t.nav).slice(0, 4).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setPage(key.charAt(0).toUpperCase() + key.slice(1))}
               className={`text-sm font-medium transition-all hover:text-blue-400 relative group ${
-                currentPage.toLowerCase() === key ? 'text-blue-400' : 'text-gray-400'
+                currentPage.toLowerCase() === key
+                  ? theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                  : theme === 'light' ? 'text-gray-700' : 'text-gray-400'
               }`}
             >
               {label}
             </button>
           ))}
           
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${
+              theme === 'light'
+                ? 'bg-gray-100 hover:bg-gray-200 text-yellow-600'
+                : 'bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white'
+            }`}
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+          
           {/* Language Toggle */}
           <button 
             onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
-            className="flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/30 transition-all"
+            className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs transition-all ${
+              theme === 'light'
+                ? 'border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-400'
+                : 'border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+            }`}
           >
             <Languages size={14} />
             {lang === 'en' ? 'العربية' : 'English'}
           </button>
 
+          {/* Sign In Button */}
+          <button
+            onClick={onSignIn}
+            className={`px-4 py-2 rounded-full font-medium text-sm transition-all ${
+              theme === 'light'
+                ? 'text-gray-700 hover:text-blue-600'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            {t.nav.signIn}
+          </button>
+
           <button 
             onClick={onRegister}
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-6 py-2.5 rounded-full font-medium text-sm transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]"
+            className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all ${
+              theme === 'light'
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg'
+                : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]'
+            }`}
           >
             {t.nav.register}
           </button>
+          
+          {/* Admin Link (hidden, accessible via keyboard shortcut or direct URL) */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={() => setPage('AdminLogin')}
+              className={`px-3 py-1 text-xs opacity-50 hover:opacity-100 transition-opacity ${
+                theme === 'light' ? 'text-gray-500' : 'text-gray-400'
+              }`}
+              title="Admin (Dev Only)"
+            >
+              Admin
+            </button>
+          )}
         </div>
       </div>
     </nav>
   );
 };
 
-const Hero = ({ setPage, t, lang }) => (
-  <div className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#00040F]">
-    <div className="absolute inset-0">
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-1000"></div>
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen"></div>
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-    </div>
+const Hero = ({ setPage, t, lang, theme }) => {
+  const [scrollY, setScrollY] = useState(0);
 
-    <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className={`relative min-h-screen flex items-center pt-20 overflow-hidden transition-colors duration-300 ${
+      theme === 'light' ? 'bg-gradient-to-br from-blue-50 to-white' : 'bg-[#00040F]'
+    }`}>
+      <div className="absolute inset-0 -z-10">
+        {/* AI Aura Orbs */}
+        <div 
+          className={`ai-aura-orb absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-60 ${
+            theme === 'dark'
+              ? 'bg-gradient-to-br from-blue-500/40 via-cyan-400/30 to-blue-600/40'
+              : 'bg-gradient-to-br from-blue-300/30 via-cyan-200/20 to-blue-400/30'
+          }`}
+          style={{
+            top: '10%',
+            left: '5%',
+            transform: `translateY(${scrollY * 0.3}px)`
+          }}
+        />
+        <div 
+          className={`ai-aura-orb-reverse absolute w-[700px] h-[700px] rounded-full blur-3xl opacity-60 ${
+            theme === 'dark'
+              ? 'bg-gradient-to-br from-purple-500/40 via-blue-400/30 to-cyan-500/40'
+              : 'bg-gradient-to-br from-purple-300/30 via-blue-200/20 to-cyan-300/30'
+          }`}
+          style={{
+            top: '20%',
+            right: '5%',
+            transform: `translateY(${scrollY * 0.2}px)`
+          }}
+        />
+      </div>
+      
+      <div className="absolute inset-0">
+        {theme === 'dark' && (
+          <>
+            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-1000"></div>
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen"></div>
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+          </>
+        )}
+        {theme === 'light' && (
+          <>
+            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-200/30 rounded-full blur-[120px] animate-pulse duration-1000"></div>
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyan-200/20 rounded-full blur-[100px]"></div>
+          </>
+        )}
+      </div>
+
+    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-16 grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
       <div className="space-y-8">
         <RevealOnScroll>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md text-blue-300 text-xs font-medium uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md text-xs font-medium uppercase tracking-widest ${
+            theme === 'light'
+              ? 'border border-blue-300 bg-blue-100/80 text-blue-700'
+              : 'border border-blue-500/30 bg-blue-500/10 text-blue-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full animate-pulse ${
+              theme === 'light' ? 'bg-blue-600' : 'bg-blue-400'
+            }`}></span>
             {t.hero.date}
           </div>
         </RevealOnScroll>
         
         <RevealOnScroll delay={100}>
-          <h1 className="text-6xl lg:text-8xl font-bold text-white leading-[0.95] tracking-tight">
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold leading-[0.95] tracking-tight ${
+            theme === 'light' ? 'text-gray-900' : 'text-white'
+          }`}>
             {t.hero.title_prefix} <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-400 to-white">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600">
               {t.hero.title_highlight}
             </span>
           </h1>
         </RevealOnScroll>
         
         <RevealOnScroll delay={200}>
-          <p className="text-xl text-gray-400 max-w-lg leading-relaxed font-light">
+          <p className={`text-sm sm:text-base md:text-lg lg:text-xl max-w-lg leading-relaxed font-light ${
+            theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+          }`}>
             {t.hero.subtitle}
           </p>
         </RevealOnScroll>
 
         {/* Live Countdown */}
         <RevealOnScroll delay={250}>
-           <div className="border-t border-white/10 pt-6">
-              <p className="text-gray-500 text-xs uppercase tracking-widest mb-2">{t.hero.countdown_label}</p>
-              <CountdownTimer />
+           <div className={`border-t pt-6 ${
+             theme === 'light' ? 'border-gray-300' : 'border-white/10'
+           }`}>
+              <p className={`text-xs uppercase tracking-widest mb-2 ${
+                theme === 'light' ? 'text-gray-500' : 'text-gray-500'
+              }`}>{t.hero.countdown_label}</p>
+              <CountdownTimer theme={theme} />
            </div>
         </RevealOnScroll>
 
         <RevealOnScroll delay={300}>
           <div className="flex flex-wrap gap-4 pt-6">
-            <button 
-              onClick={() => setPage('Agenda')}
-              className="px-8 py-4 bg-white text-black rounded-full font-bold text-sm transition-all hover:bg-blue-50 flex items-center gap-2"
-            >
+          <button 
+            onClick={() => setPage('Agenda')}
+            className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-sm transition-all flex items-center gap-2 min-h-[44px] ${
+              theme === 'light'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                : 'bg-white text-black hover:bg-blue-50 active:bg-gray-100'
+            }`}
+          >
               {t.hero.cta_agenda} <ArrowRight size={16} className={lang === 'ar' ? 'rotate-180' : ''} />
             </button>
-            <button className="px-8 py-4 border border-white/10 bg-white/5 backdrop-blur rounded-full text-white font-medium text-sm transition-all hover:bg-white/10 flex items-center gap-2">
+            <button className={`px-8 py-4 border backdrop-blur rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+              theme === 'light'
+                ? 'border-gray-300 bg-white/80 text-gray-700 hover:bg-white hover:border-blue-400'
+                : 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+            }`}>
               <Play size={16} fill="currentColor" /> {t.hero.cta_watch}
             </button>
           </div>
@@ -791,16 +1789,29 @@ const Hero = ({ setPage, t, lang }) => (
       </RevealOnScroll>
     </div>
   </div>
-);
+  );
+};
 
-const Marquee = () => (
-  <div className="bg-[#00040F] py-6 border-y border-white/5 relative overflow-hidden z-20">
-    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#00040F] to-transparent z-10"></div>
-    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#00040F] to-transparent z-10"></div>
+const Marquee = ({ theme }) => (
+  <div className={`py-6 border-y relative overflow-hidden z-20 transition-colors duration-300 ${
+    theme === 'light'
+      ? 'bg-gray-100 border-gray-200'
+      : 'bg-[#00040F] border-white/5'
+  }`}>
+    <div className={`absolute inset-y-0 left-0 w-32 bg-gradient-to-r z-10 ${
+      theme === 'light' ? 'from-gray-100 to-transparent' : 'from-[#00040F] to-transparent'
+    }`}></div>
+    <div className={`absolute inset-y-0 right-0 w-32 bg-gradient-to-l z-10 ${
+      theme === 'light' ? 'from-gray-100 to-transparent' : 'from-[#00040F] to-transparent'
+    }`}></div>
     <div className="whitespace-nowrap animate-scroll flex gap-12 opacity-50">
       {[...Array(10)].map((_, i) => (
         <div key={i} className="flex items-center gap-4">
-          <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600 uppercase tracking-widest">
+          <span className={`text-xl font-bold text-transparent bg-clip-text uppercase tracking-widest ${
+            theme === 'light'
+              ? 'bg-gradient-to-r from-gray-500 to-gray-700'
+              : 'bg-gradient-to-r from-gray-400 to-gray-600'
+          }`}>
             Baghdad AI Summit
           </span>
           <div className="w-8 h-8 opacity-50">
@@ -821,31 +1832,63 @@ const Marquee = () => (
   </div>
 );
 
-const StatCounter = ({ end, label, icon: Icon }) => {
+const StatCounter = ({ end, label, icon: Icon, theme }) => {
   const { count, countRef } = useCounter(end);
   return (
-    <div ref={countRef} className="text-center p-8 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
-      <div className="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-400">
+    <div 
+      ref={countRef} 
+      className={`text-center p-8 rounded-2xl border transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-[0.97] focus:ring-2 focus:ring-blue-500/70 outline-none ${
+        theme === 'light'
+          ? 'bg-white border-gray-200 hover:bg-gray-50 shadow-sm'
+          : 'bg-white/5 border-white/5 hover:bg-white/10'
+      }`}
+      tabIndex={0}
+      onMouseDown={(e) => {
+        e.currentTarget.classList.add('animate-press');
+        setTimeout(() => e.currentTarget.classList.remove('animate-press'), 120);
+      }}
+    >
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${
+        theme === 'light'
+          ? 'bg-blue-100 text-blue-600'
+          : 'bg-blue-600/20 text-blue-400'
+      }`}>
         <Icon size={24} />
       </div>
-      <div className="text-4xl md:text-5xl font-bold text-white mb-2">{count.toLocaleString()}+</div>
-      <div className="text-sm text-gray-400 uppercase tracking-widest">{label}</div>
+      <div className={`text-4xl md:text-5xl font-bold mb-2 ${
+        theme === 'light' ? 'text-gray-900' : 'text-white'
+      }`}>{count.toLocaleString()}+</div>
+      <div className={`text-sm uppercase tracking-widest ${
+        theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+      }`}>{label}</div>
     </div>
   );
 };
 
-const StatsSection = ({ t }) => (
-  <section className="py-24 bg-[#00040F] relative overflow-hidden">
-    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <StatCounter end={5000} label={t.stats.attendees} icon={Users} />
-      <StatCounter end={120} label={t.stats.speakers} icon={Mic} />
-      <StatCounter end={100} label={t.stats.exhibitors} icon={Store} />
+const StatsSection = ({ t, theme }) => (
+  <section id="stats" className={`py-24 relative overflow-hidden transition-colors duration-300 ${
+    theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
+  }`}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+      <StatCounter end={5000} label={t.stats.attendees} icon={Users} theme={theme} />
+      <StatCounter end={120} label={t.stats.speakers} icon={Mic} theme={theme} />
+      <StatCounter end={100} label={t.stats.exhibitors} icon={Store} theme={theme} />
     </div>
   </section>
 );
 
-const SpeakerCard = ({ speaker }) => (
-  <div className="group relative bg-[#010614] rounded-xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/20">
+const SpeakerCard = ({ speaker, theme }) => (
+  <div 
+    className={`group relative rounded-xl overflow-hidden border transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] active:scale-[0.97] ${
+      theme === 'light'
+        ? 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-xl'
+        : 'bg-[#010614] border-white/10 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/20'
+    }`}
+    onMouseDown={(e) => {
+      e.currentTarget.classList.add('animate-press');
+      setTimeout(() => e.currentTarget.classList.remove('animate-press'), 120);
+    }}
+  >
     <div className="aspect-[4/5] overflow-hidden relative">
       <img 
         src={speaker.image} 
@@ -863,23 +1906,29 @@ const SpeakerCard = ({ speaker }) => (
         <p className="text-blue-400 text-sm font-medium">{speaker.company}</p>
       </div>
     </div>
-    <div className="p-4 bg-[#010614]">
-       <p className="text-gray-400 text-xs uppercase tracking-wider">{speaker.role}</p>
+    <div className={`p-4 ${
+      theme === 'light' ? 'bg-white' : 'bg-[#010614]'
+    }`}>
+       <p className={`text-xs uppercase tracking-wider ${
+         theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+       }`}>{speaker.role}</p>
     </div>
   </div>
 );
 
-const SpeakersSection = ({ t }) => (
-  <section className="py-24 bg-[#00030a]">
+const SpeakersSection = ({ t, theme }) => (
+  <section id="speakers" className={`py-24 transition-colors duration-300 ${
+    theme === 'light' ? 'bg-gray-50' : 'bg-[#00030a]'
+  }`}>
     <div className="max-w-7xl mx-auto px-6">
       <RevealOnScroll>
-        <SectionHeading title={t.speakers.title} subtitle={t.speakers.subtitle} />
+        <SectionHeading title={t.speakers.title} subtitle={t.speakers.subtitle} theme={theme} />
       </RevealOnScroll>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
         {SPEAKERS.map((speaker, idx) => (
           <RevealOnScroll key={speaker.id} delay={idx * 100}>
-            <SpeakerCard speaker={speaker} />
+            <SpeakerCard speaker={speaker} theme={theme} />
           </RevealOnScroll>
         ))}
       </div>
@@ -887,7 +1936,7 @@ const SpeakersSection = ({ t }) => (
   </section>
 );
 
-const AgendaTimeline = () => (
+const AgendaTimeline = ({ theme }) => (
   <div className="max-w-4xl mx-auto space-y-8 relative">
     <div className="absolute left-[19px] md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-600 via-cyan-500 to-transparent opacity-30 md:-translate-x-1/2"></div>
     
@@ -895,18 +1944,34 @@ const AgendaTimeline = () => (
       <RevealOnScroll key={idx} delay={idx * 100}>
         <div className={`relative flex flex-col md:flex-row gap-8 md:gap-0 items-start ${idx % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
           
-          <div className="absolute left-0 md:left-1/2 w-10 h-10 rounded-full bg-[#00040F] border-2 border-blue-600 flex items-center justify-center z-10 md:-translate-x-1/2 shrink-0">
+          <div className={`absolute left-0 md:left-1/2 w-10 h-10 rounded-full border-2 border-blue-600 flex items-center justify-center z-10 md:-translate-x-1/2 shrink-0 ${
+            theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
+          }`}>
              <div className="w-2 h-2 rounded-full bg-white"></div>
           </div>
 
           <div className={`pl-16 md:pl-0 md:w-1/2 ${idx % 2 === 0 ? 'md:pl-12 text-left' : 'md:pr-12 md:text-right'}`}>
-            <div className="bg-white/5 border border-white/5 p-6 rounded-2xl hover:bg-white/10 transition-all cursor-default">
-              <span className="inline-block px-3 py-1 bg-blue-600/20 text-blue-400 text-xs font-bold rounded-full mb-3">
+            <div className={`p-6 rounded-2xl transition-all cursor-default ${
+              theme === 'light'
+                ? 'bg-white border border-gray-200 hover:bg-gray-50 shadow-sm'
+                : 'bg-white/5 border border-white/5 hover:bg-white/10'
+            }`}>
+              <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full mb-3 ${
+                theme === 'light'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-blue-600/20 text-blue-400'
+              }`}>
                 {item.time}
               </span>
-              <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
-              <div className={`flex items-center gap-2 mt-4 text-xs text-gray-500 uppercase tracking-widest ${idx % 2 !== 0 && 'md:justify-end'}`}>
+              <h3 className={`text-xl font-bold mb-2 ${
+                theme === 'light' ? 'text-gray-900' : 'text-white'
+              }`}>{item.title}</h3>
+              <p className={`text-sm leading-relaxed ${
+                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+              }`}>{item.desc}</p>
+              <div className={`flex items-center gap-2 mt-4 text-xs uppercase tracking-widest ${idx % 2 !== 0 && 'md:justify-end'} ${
+                theme === 'light' ? 'text-gray-500' : 'text-gray-500'
+              }`}>
                  <div className={`w-2 h-2 rounded-full ${item.type === 'Keynote' ? 'bg-indigo-500' : item.type === 'Panel' ? 'bg-blue-500' : 'bg-cyan-500'}`}></div>
                  {item.type}
               </div>
@@ -922,40 +1987,145 @@ const AgendaTimeline = () => (
 
 // --- PAGES ---
 
-const HomePage = ({ setPage, t, lang }) => (
+// --- LIVE ATTENDING NOW COUNTER ---
+
+const AttendingNowCounter = ({ theme, lang }) => {
+  const [count, setCount] = useState(() => Math.floor(Math.random() * (250 - 30 + 1)) + 30);
+  const [displayCount, setDisplayCount] = useState(count);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newCount = Math.floor(Math.random() * (250 - 30 + 1)) + 30;
+      setCount(newCount);
+      
+      // Smooth count animation
+      const steps = 20;
+      const stepValue = (newCount - displayCount) / steps;
+      let current = displayCount;
+      const counter = setInterval(() => {
+        current += stepValue;
+        if (Math.abs(newCount - current) < Math.abs(stepValue)) {
+          setDisplayCount(newCount);
+          clearInterval(counter);
+        } else {
+          setDisplayCount(Math.round(current));
+        }
+      }, 50);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [count, displayCount]);
+
+  return (
+    <div className={`fixed top-24 ${lang === 'ar' ? 'left-6' : 'right-6'} z-40 hidden md:block`}>
+      <div className={`backdrop-blur-xl rounded-2xl border p-4 shadow-xl transition-colors duration-300 ${
+        theme === 'light'
+          ? 'bg-white/90 border-gray-200'
+          : 'bg-black/80 border-white/10'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full animate-pulse ${
+            theme === 'light' ? 'bg-green-500' : 'bg-green-400'
+          }`}></div>
+          <div>
+            <p className={`text-xs font-medium ${
+              theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+            }`}>
+              {lang === 'ar' ? 'المشاهدون الآن' : 'Attending Now'}
+            </p>
+            <p className={`text-lg font-bold ${
+              theme === 'light' ? 'text-gray-900' : 'text-white'
+            }`}>
+              {displayCount}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HomePage = ({ setPage, t, lang, theme }) => (
   <>
-    <Hero setPage={setPage} t={t} lang={lang} />
-    <Marquee />
-    <StatsSection t={t} />
-    <SpeakersSection t={t} />
+    <AttendingNowCounter theme={theme} lang={lang} />
+    <Hero setPage={setPage} t={t} lang={lang} theme={theme} />
+    <Marquee theme={theme} />
+    <StatsSection t={t} theme={theme} />
+    <SpeakersSection t={t} theme={theme} />
     
-    <section className="py-32 relative overflow-hidden bg-blue-900/20">
-      <div className="absolute inset-0 bg-[#00040F]/80"></div>
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+    <section className={`py-32 relative overflow-hidden transition-colors duration-300 ${
+      theme === 'light' ? 'bg-blue-100/50' : 'bg-blue-900/20'
+    }`}>
+      {theme === 'dark' && (
+        <>
+          <div className="absolute inset-0 bg-[#00040F]/80"></div>
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+        </>
+      )}
       <div className="relative z-10 max-w-4xl mx-auto text-center px-6">
-        <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 tracking-tight">Ready to shape the future?</h2>
-        <p className="text-xl text-gray-300 mb-10 font-light">Join the most influential minds in AI at the heart of the Middle East.</p>
-        <button 
-          onClick={() => setPage('Agenda')}
-          className="bg-white text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all hover:scale-105 shadow-xl shadow-white/10"
-        >
-          Secure Your Spot
-        </button>
+        <h2 className={`text-4xl md:text-6xl font-bold mb-8 tracking-tight ${
+          theme === 'light' ? 'text-gray-900' : 'text-white'
+        }`}>Ready to shape the future?</h2>
+        <p className={`text-xl mb-10 font-light ${
+          theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+        }`}>Join the most influential minds in AI at the heart of the Middle East.</p>
+        <div className="flex flex-wrap gap-4">
+          <button 
+            onClick={() => setPage('Agenda')}
+            className={`px-10 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-xl ${
+              theme === 'light'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-400/30'
+                : 'bg-white text-black hover:bg-blue-50 shadow-white/10'
+            }`}
+          >
+            Secure Your Spot
+          </button>
+          <button
+            onClick={() => {
+              const event = {
+                title: 'Baghdad AI Summit 2026',
+                description: 'The premier artificial intelligence summit in the Middle East',
+                startDate: new Date('2026-10-15T09:00:00'),
+                endDate: new Date('2026-10-17T18:00:00'),
+                location: "Baghdad International Fairground"
+              };
+              try {
+                openGoogleCalendar(event);
+              } catch (error) {
+                console.error('Error opening calendar:', error);
+              }
+            }}
+            className={`px-6 py-4 rounded-full font-medium text-sm transition-all hover:scale-105 border flex items-center gap-2 ${
+              theme === 'light'
+                ? 'border-gray-300 bg-white hover:bg-gray-50 text-gray-700'
+                : 'border-white/20 bg-white/5 hover:bg-white/10 text-white'
+            }`}
+          >
+            <Calendar size={18} />
+            {lang === 'ar' ? 'إضافة إلى التقويم' : 'Add to Calendar'}
+          </button>
+        </div>
       </div>
     </section>
   </>
 );
 
-const AboutPage = ({ t }) => (
-  <div className="pt-32 pb-20 bg-[#00040F] min-h-screen">
+const AboutPage = ({ t, theme }) => (
+  <div className={`pt-32 pb-20 min-h-screen transition-colors duration-300 ${
+    theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
+  }`}>
     <div className="max-w-7xl mx-auto px-6">
-      <SectionHeading title="Our Origins" subtitle="A legacy of wisdom reborn." align="left" />
+      <SectionHeading title="Our Origins" subtitle="A legacy of wisdom reborn." align="left" theme={theme} />
       
       <div className="grid lg:grid-cols-2 gap-16 items-start">
-        <div className="space-y-6 text-gray-400 text-lg leading-relaxed">
+        <div className={`space-y-6 text-lg leading-relaxed ${
+          theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+        }`}>
           <p>
-            <span className="text-white font-bold">Baghdad.</span> The name itself evokes a history of profound knowledge. 
+            <span className={`font-bold ${
+              theme === 'light' ? 'text-gray-900' : 'text-white'
+            }`}>Baghdad.</span> The name itself evokes a history of profound knowledge. 
             During the Golden Age, the House of Wisdom attracted scholars from across the known world to translate, 
             innovate, and debate.
           </p>
@@ -965,13 +2135,29 @@ const AboutPage = ({ t }) => (
             as a pivotal node in the global AI network.
           </p>
           <div className="grid grid-cols-2 gap-6 pt-6">
-            <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-              <h4 className="text-white font-bold text-xl mb-2">Vision</h4>
-              <p className="text-sm">To be the catalyst for the digital transformation of Mesopotamia.</p>
+            <div className={`p-6 rounded-xl border ${
+              theme === 'light'
+                ? 'bg-gray-50 border-gray-200'
+                : 'bg-white/5 border-white/10'
+            }`}>
+              <h4 className={`font-bold text-xl mb-2 ${
+                theme === 'light' ? 'text-gray-900' : 'text-white'
+              }`}>Vision</h4>
+              <p className={`text-sm ${
+                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+              }`}>To be the catalyst for the digital transformation of Mesopotamia.</p>
             </div>
-            <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-              <h4 className="text-white font-bold text-xl mb-2">Impact</h4>
-              <p className="text-sm">Empowering 10,000+ youth with AI literacy by 2030.</p>
+            <div className={`p-6 rounded-xl border ${
+              theme === 'light'
+                ? 'bg-gray-50 border-gray-200'
+                : 'bg-white/5 border-white/10'
+            }`}>
+              <h4 className={`font-bold text-xl mb-2 ${
+                theme === 'light' ? 'text-gray-900' : 'text-white'
+              }`}>Impact</h4>
+              <p className={`text-sm ${
+                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+              }`}>Empowering 10,000+ youth with AI literacy by 2030.</p>
             </div>
           </div>
         </div>
@@ -981,7 +2167,9 @@ const AboutPage = ({ t }) => (
           <img 
             src="public/Ancient.jpg" 
             alt="Ancient Mesopotamia meets Future" 
-            className="relative rounded-2xl shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all duration-700"
+            className={`relative rounded-2xl shadow-2xl border grayscale hover:grayscale-0 transition-all duration-700 ${
+              theme === 'light' ? 'border-gray-200' : 'border-white/10'
+            }`}
           />
         </div>
       </div>
@@ -989,27 +2177,33 @@ const AboutPage = ({ t }) => (
   </div>
 );
 
-const AgendaPage = () => (
-  <div className="pt-32 pb-20 bg-[#00040F] min-h-screen">
+const AgendaPage = ({ theme }) => (
+  <div id="agenda" className={`pt-32 pb-20 min-h-screen transition-colors duration-300 ${
+    theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
+  }`}>
     <div className="max-w-7xl mx-auto px-6">
-      <SectionHeading title="Summit Agenda" subtitle="Three days of immersive learning and networking." />
-      <AgendaTimeline />
+      <SectionHeading title="Summit Agenda" subtitle="Three days of immersive learning and networking." theme={theme} />
+      <AgendaTimeline theme={theme} />
     </div>
   </div>
 );
 
-const EcosystemPage = ({ t, lang, setSpeakerModal }) => {
+const EcosystemPage = ({ t, lang, setSpeakerModal, theme }) => {
   const [showPartnershipWizard, setShowPartnershipWizard] = useState(false);
 
   return (
-    <div className="pt-32 pb-20 bg-[#00040F] min-h-screen">
+    <div id="ecosystem" className={`pt-32 pb-20 min-h-screen transition-colors duration-300 ${
+      theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
+    }`}>
       {/* Portal Wizard Modal */}
-      {showPartnershipWizard && <PartnershipWizard onClose={() => setShowPartnershipWizard(false)} t={t.ecosystem} lang={lang} />}
+      {showPartnershipWizard && <PartnershipWizard onClose={() => setShowPartnershipWizard(false)} t={t.ecosystem} lang={lang} theme={theme} />}
 
       <div className="max-w-7xl mx-auto px-6">
-        <SectionHeading title={t.ecosystem.title} subtitle={t.ecosystem.subtitle} />
+        <SectionHeading title={t.ecosystem.title} subtitle={t.ecosystem.subtitle} theme={theme} />
         
-        <EcosystemMarquee />
+        <div id="partners">
+          <EcosystemMarquee theme={theme} />
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
@@ -1024,12 +2218,22 @@ const EcosystemPage = ({ t, lang, setSpeakerModal }) => {
             <div 
               key={i} 
               onClick={item.action}
-              className="group p-8 bg-white/5 border border-white/5 rounded-2xl hover:border-blue-500/50 hover:bg-white/10 transition-all duration-300 cursor-pointer"
+              className={`group p-8 rounded-2xl transition-all duration-300 cursor-pointer ${
+                theme === 'light'
+                  ? 'bg-white border border-gray-200 hover:border-blue-400 hover:bg-blue-50 shadow-sm'
+                  : 'bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-white/10'
+              }`}
             >
               <item.icon className="w-10 h-10 text-blue-500 mb-6 group-hover:scale-110 transition-transform" />
-              <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
-              <p className="text-gray-400 mb-6">{item.desc}</p>
-              <button className="text-sm font-bold text-white flex items-center gap-2 group-hover:gap-3 transition-all">
+              <h3 className={`text-2xl font-bold mb-2 ${
+                theme === 'light' ? 'text-gray-900' : 'text-white'
+              }`}>{item.title}</h3>
+              <p className={`mb-6 ${
+                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+              }`}>{item.desc}</p>
+              <button className={`text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all ${
+                theme === 'light' ? 'text-gray-900' : 'text-white'
+              }`}>
                 {t.ecosystem.apply} <ChevronRight size={14} className={`text-blue-500 ${lang === 'ar' ? 'rotate-180' : ''}`} />
               </button>
             </div>
@@ -1040,8 +2244,12 @@ const EcosystemPage = ({ t, lang, setSpeakerModal }) => {
   );
 };
 
-const Footer = () => (
-  <footer className="bg-[#000208] border-t border-white/5 pt-20 pb-10">
+const Footer = ({ theme }) => (
+  <footer className={`border-t pt-20 pb-10 transition-colors duration-300 ${
+    theme === 'light'
+      ? 'bg-gray-50 border-gray-200'
+      : 'bg-[#000208] border-white/5'
+  }`}>
     <div className="max-w-7xl mx-auto px-6">
       <div className="grid md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-2">
@@ -1049,19 +2257,37 @@ const Footer = () => (
             <SummitLogo />
             <span className="font-bold text-2xl text-white">BAGHDAD AI</span>
           </div>
-          <p className="text-gray-400 max-w-sm mb-6">
+          <p className={`max-w-sm mb-6 ${
+            theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+          }`}>
             The largest gathering of AI professionals, researchers, and enthusiasts in Iraq.
           </p>
           <div className="flex gap-4">
-            <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-blue-600 transition-colors"><Twitter size={18} /></button>
-            <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-blue-600 transition-colors"><Linkedin size={18} /></button>
-            <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-blue-600 transition-colors"><Globe size={18} /></button>
+            <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              theme === 'light'
+                ? 'bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white'
+                : 'bg-white/5 text-white hover:bg-blue-600'
+            }`}><Twitter size={18} /></button>
+            <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              theme === 'light'
+                ? 'bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white'
+                : 'bg-white/5 text-white hover:bg-blue-600'
+            }`}><Linkedin size={18} /></button>
+            <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              theme === 'light'
+                ? 'bg-gray-200 text-gray-700 hover:bg-blue-600 hover:text-white'
+                : 'bg-white/5 text-white hover:bg-blue-600'
+            }`}><Globe size={18} /></button>
           </div>
         </div>
         
         <div>
-          <h4 className="text-white font-bold mb-6">Quick Links</h4>
-          <ul className="space-y-4 text-gray-400 text-sm">
+          <h4 className={`font-bold mb-6 ${
+            theme === 'light' ? 'text-gray-900' : 'text-white'
+          }`}>Quick Links</h4>
+          <ul className={`space-y-4 text-sm ${
+            theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+          }`}>
             <li className="hover:text-blue-400 cursor-pointer">About Us</li>
             <li className="hover:text-blue-400 cursor-pointer">Speakers</li>
             <li className="hover:text-blue-400 cursor-pointer">Agenda</li>
@@ -1070,8 +2296,12 @@ const Footer = () => (
         </div>
         
         <div>
-          <h4 className="text-white font-bold mb-6">Legal</h4>
-          <ul className="space-y-4 text-gray-400 text-sm">
+          <h4 className={`font-bold mb-6 ${
+            theme === 'light' ? 'text-gray-900' : 'text-white'
+          }`}>Legal</h4>
+          <ul className={`space-y-4 text-sm ${
+            theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+          }`}>
             <li className="hover:text-blue-400 cursor-pointer">Privacy Policy</li>
             <li className="hover:text-blue-400 cursor-pointer">Terms of Service</li>
             <li className="hover:text-blue-400 cursor-pointer">Code of Conduct</li>
@@ -1079,20 +2309,115 @@ const Footer = () => (
         </div>
       </div>
       
-      <div className="border-t border-white/5 pt-8 text-center text-gray-600 text-sm">
-        &copy; 2026 Baghdad AI Summit. All rights reserved. Designed with <span className="text-blue-500">♥</span> for the future.
+      <div className={`border-t pt-8 text-center text-sm ${
+        theme === 'light'
+          ? 'border-gray-200 text-gray-500'
+          : 'border-white/5 text-gray-600'
+      }`}>
+        &copy; 2026 Baghdad AI Summit. All rights reserved.
       </div>
     </div>
   </footer>
 );
 
+// --- PAGE TRANSITION COMPONENT ---
+
+const PageTransition = ({ children, key }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [key]);
+
+  return (
+    <div
+      className={`transition-all duration-500 ease-out ${
+        isVisible
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 translate-y-4'
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
+
+// --- LOADING SKELETON COMPONENT ---
+
+const LoadingSkeleton = ({ theme }) => (
+  <div className="animate-pulse space-y-4 p-6">
+    <div className={`h-6 rounded ${
+      theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+    }`}></div>
+    <div className={`h-6 rounded w-2/3 ${
+      theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+    }`}></div>
+    <div className={`h-48 rounded ${
+      theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+    }`}></div>
+    <div className={`h-32 rounded ${
+      theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+    }`}></div>
+  </div>
+);
+
+// --- SCROLL TO TOP BUTTON ---
+
+const ScrollTopButton = ({ lang, theme }) => {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (!showScrollTop) return null;
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className={`fixed ${lang === 'ar' ? 'left-6' : 'right-6'} bottom-24 z-40 w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition-all hover:scale-110 ${
+        theme === 'light'
+          ? 'bg-white text-slate-900 shadow-lg border border-gray-300'
+          : 'bg-white/10 text-white border border-white/20'
+      }`}
+      aria-label="Scroll to top"
+    >
+      <ArrowUp size={20} />
+    </button>
+  );
+};
+
 // --- MAIN APP ---
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState('Home');
+import AdminLogin from '@/pages/AdminLogin';
+import AdminDashboard from '@/pages/AdminDashboard';
+import SignIn from '@/pages/SignIn';
+import Register from '@/pages/Register';
+
+const App = ({ route }) => {
+  const [currentPage, setCurrentPage] = useState(route || 'Home');
   const [lang, setLang] = useState('en');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme || 'dark';
+  });
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showSpeakerModal, setShowSpeakerModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1104,10 +2429,84 @@ const App = () => {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Handle theme
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    if (theme === 'light') {
+      document.documentElement.style.colorScheme = 'light';
+    } else {
+      document.documentElement.style.colorScheme = 'dark';
+    }
+  }, [theme]);
+
   const t = CONTENT[lang];
 
+  // Admin routing
+  if (currentPage === 'AdminLogin') {
+    return (
+      <AdminLogin 
+        onLogin={() => {
+          setAdminLoggedIn(true);
+          setCurrentPage('AdminDashboard');
+        }}
+        t={t}
+        theme={theme}
+        lang={lang}
+      />
+    );
+  }
+
+  if (currentPage === 'AdminDashboard') {
+    if (!adminLoggedIn) {
+      setCurrentPage('AdminLogin');
+      return null;
+    }
+    return (
+      <AdminDashboard
+        onLogout={() => {
+          setAdminLoggedIn(false);
+          setCurrentPage('Home');
+        }}
+        t={t}
+        theme={theme}
+        lang={lang}
+      />
+    );
+  }
+
+  if (currentPage === 'SignIn') {
+    return (
+      <SignIn
+        onSignIn={() => {}}
+        onSwitchToRegister={() => setCurrentPage('Register')}
+        t={t}
+        lang={lang}
+        theme={theme}
+        setPage={setCurrentPage}
+      />
+    );
+  }
+
+  if (currentPage === 'Register') {
+    return (
+      <Register
+        onRegister={() => {}}
+        onSwitchToSignIn={() => setCurrentPage('SignIn')}
+        t={t}
+        lang={lang}
+        theme={theme}
+        setPage={setCurrentPage}
+      />
+    );
+  }
+
   return (
-    <div className={`bg-[#00040F] min-h-screen text-white font-sans selection:bg-blue-600 selection:text-white ${lang === 'ar' ? 'font-arabic' : ''}`}>
+    <div className={`min-h-screen font-sans transition-colors duration-300 ${
+      theme === 'light'
+        ? 'bg-gray-50 text-gray-900'
+        : 'bg-[#00040F] text-white'
+    } selection:bg-blue-600 selection:text-white ${lang === 'ar' ? 'font-arabic' : ''}`}>
       <Navbar 
         setPage={setCurrentPage} 
         currentPage={currentPage} 
@@ -1115,19 +2514,30 @@ const App = () => {
         setLang={setLang} 
         t={t} 
         onRegister={() => setShowRegisterModal(true)}
+        onSignIn={() => setCurrentPage('SignIn')}
+        theme={theme}
+        setTheme={setTheme}
       />
       
-      {showRegisterModal && <GeneralRegistrationForm onClose={() => setShowRegisterModal(false)} t={t} />}
-      {showSpeakerModal && <SpeakerRegistrationForm onClose={() => setShowSpeakerModal(false)} t={t} />}
+      {showRegisterModal && <GeneralRegistrationForm onClose={() => setShowRegisterModal(false)} t={t} theme={theme} />}
+      {showSpeakerModal && <SpeakerRegistrationForm onClose={() => setShowSpeakerModal(false)} t={t} theme={theme} />}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} t={t} lang={lang} theme={theme} />}
 
       <main className="animate-fade-in">
-        {currentPage === 'Home' && <HomePage setPage={setCurrentPage} t={t} lang={lang} />}
-        {currentPage === 'About' && <AboutPage t={t} />}
-        {currentPage === 'Agenda' && <AgendaPage />}
-        {currentPage === 'Ecosystem' && <EcosystemPage t={t} lang={lang} setSpeakerModal={setShowSpeakerModal} />}
+        <PageTransition key={currentPage}>
+          <Suspense fallback={<LoadingSkeleton theme={theme} />}>
+            {currentPage === 'Home' && <HomePage setPage={setCurrentPage} t={t} lang={lang} theme={theme} />}
+            {currentPage === 'About' && <AboutPage t={t} theme={theme} />}
+            {currentPage === 'Agenda' && <AgendaPage theme={theme} />}
+            {currentPage === 'Ecosystem' && <EcosystemPage t={t} lang={lang} setSpeakerModal={setShowSpeakerModal} theme={theme} />}
+          </Suspense>
+        </PageTransition>
       </main>
 
-      <Footer />
+      <Footer theme={theme} />
+      
+      <ScrollTopButton lang={lang} theme={theme} />
+      <Chatbot t={t} lang={lang} theme={theme} />
     </div>
   );
 };

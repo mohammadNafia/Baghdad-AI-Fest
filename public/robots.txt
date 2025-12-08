@@ -1,0 +1,9 @@
+# robots.txt for Baghdad AI Summit 2026
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://baghdad-ai-summit.com/sitemap.xml
+
