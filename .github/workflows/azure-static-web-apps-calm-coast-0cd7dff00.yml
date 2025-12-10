@@ -15,10 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-          lfs: false
+      - uses: actions/checkout@v2
+
+      - name: Set HOME (for git permissions)
+        run: echo "HOME=$(pwd)" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Fix vite executable permissions
+        run: chmod +x ./node_modules/.bin/vite
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
