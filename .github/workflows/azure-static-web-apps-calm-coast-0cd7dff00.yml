@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
       - name: Set HOME (for git permissions)
         run: echo "HOME=$(pwd)" >> $GITHUB_ENV
 
