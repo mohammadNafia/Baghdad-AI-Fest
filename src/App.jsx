@@ -40,16 +40,17 @@ import {
 
 // --- TRANSLATIONS ---
 
+// Muammal : change in names ( AI summit -> Ai Dev Fest ) ("Time", "Location", "Watch 2025 Recap") 
 const CONTENT = {
   en: {
     nav: { home: 'Home', about: 'About', agenda: 'Agenda', ecosystem: 'Ecosystem', register: 'Register Now', signIn: 'Sign In' },
     hero: {
-      date: "Oct 15-17, 2026 • Baghdad Int'l Fairground",
+      date: "January 27, 2026 • The Station",
       title_prefix: "Bridging",
       title_highlight: "Intelligence",
-      subtitle: "The premier artificial intelligence summit in the Middle East. Join 5,000+ innovators shaping the future of Mesopotamia.",
+      subtitle: "The premier artificial intelligence Festival in the Middle East. Join our community of Ai innovators in the mission of shaping the future of Mesopotamia.",
       cta_agenda: "View Agenda",
-      cta_watch: "Watch 2025 Recap",
+      cta_watch: "Event Page",
       countdown_label: "Time Until Summit"
     },
     stats: { attendees: "Attendees", speakers: "Speakers", exhibitors: "Exhibitors" },
@@ -154,15 +155,15 @@ const CONTENT = {
     }
   },
   ar: {
-    nav: { home: 'الرئيسية', about: 'عن القمة', agenda: 'الجدول', ecosystem: 'البيئة التقنية', register: 'سجل الآن', signIn: 'تسجيل الدخول' },
+    nav: { home: 'الرئيسية', about: 'عن المهرجان', agenda: 'الجدول', ecosystem: 'البيئة التقنية', register: 'سجل الآن', signIn: 'تسجيل الدخول' },
     hero: {
-      date: "١٥-١٧ أكتوبر ٢٠٢٦ • معرض بغداد الدولي",
+      date: "يناير 27 2026 • المحطة",
       title_prefix: "جسر",
       title_highlight: "الذكاء الاصطناعي",
-      subtitle: "القمة الرائدة للذكاء الاصطناعي في الشرق الأوسط. انضم إلى أكثر من ٥٠٠٠ مبتكر يشكلون مستقبل بلاد الرافدين.",
+      subtitle: "المهرجان الرائد للذكاء الاصطناعي في الشرق الأوسط. انضم إلى مجتمع مبتكري الذكاء الأصطناعي في تشكيل مستقبل بلاد الرافدين.",
       cta_agenda: "عرض الجدول",
-      cta_watch: "شاهد ملخص ٢٠٢٥",
-      countdown_label: "الوقت المتبقي للقمة"
+      cta_watch: "حساب الحدث",
+      countdown_label: "الوقت المتبقي للمهرجان"
     },
     stats: { attendees: "حضور", speakers: "متحدثين", exhibitors: "عارضين" },
     speakers: { title: "عقول عالمية", subtitle: "تعلم من الرواد الذين يرسمون حدود الذكاء الاصطناعي." },
@@ -353,9 +354,9 @@ const SummitLogo = ({ className = "w-12 h-12" }) => {
 
 const CountdownTimer = ({ theme = 'dark' }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
+// Muammal : change in counter time
   useEffect(() => {
-    const targetDate = new Date("October 15, 2026 09:00:00").getTime();
+    const targetDate = new Date("January 27, 2026 09:00:00").getTime();
     
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -2084,11 +2085,11 @@ const HomePage = ({ setPage, t, lang, theme }) => (
           <button
             onClick={() => {
               const event = {
-                title: 'Baghdad AI Summit 2026',
-                description: 'The premier artificial intelligence summit in the Middle East',
+                title: 'Iraq AI DevFest 2026',
+                description: 'The premier artificial intelligence Festival in the Middle East', // Muammal : Name change
                 startDate: new Date('2026-10-15T09:00:00'),
                 endDate: new Date('2026-10-17T18:00:00'),
-                location: "Baghdad International Fairground"
+                location: "The Station"
               };
               try {
                 openGoogleCalendar(event);
