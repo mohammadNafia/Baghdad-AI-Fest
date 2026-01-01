@@ -36,16 +36,22 @@ export interface PaginatedResponse<T> {
 export interface Speaker {
   id: number | string;
   name: string;
+  name_ar?: string;
   role: string;
+  role_ar?: string;
   company: string;
+  company_ar?: string;
   image: string;
   topic?: string;
+  topic_ar?: string;
   bio?: string;
+  bio_ar?: string;
   socialLinks?: {
     linkedin?: string;
     twitter?: string;
     website?: string;
   };
+  order_index?: number;
   [key: string]: any;
 }
 
@@ -94,6 +100,8 @@ export interface AttendeeFormData {
   phone: string;
   motivation: string;
   dateSubmitted: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  newsletter?: boolean;
   [key: string]: any;
 }
 
@@ -294,3 +302,26 @@ export interface ResponsiveProps {
 
 // Re-export staff types from staffTypes.ts
 export type * from './staffTypes';
+
+// ============================================================================
+// DATABASE MIGRATIONS
+// ============================================================================
+
+/*
+
+-- Add status column to attendee_registrations table
+ALTER TABLE attendee_registrations 
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending' 
+CHECK (status IN ('pending', 'approved', 'rejected'));
+
+-- Add unique constraint on email
+ALTER TABLE attendee_registrations 
+ADD CONSTRAINT unique_attendee_email UNIQUE (email);
+
+-- Create index for faster status queries
+CREATE INDEX IF NOT EXISTS idx_attendee_status ON attendee_registrations(status);
+
+-- Create index for email lookups
+CREATE INDEX IF NOT EXISTS idx_attendee_email ON attendee_registrations(email);
+
+*/

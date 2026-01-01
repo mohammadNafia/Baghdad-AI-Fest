@@ -11,6 +11,7 @@ const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const AboutPage = React.lazy(() => import('@/pages/AboutPage'));
 const AgendaPage = React.lazy(() => import('@/pages/AgendaPage'));
 const EcosystemPage = React.lazy(() => import('@/pages/EcosystemPage'));
+const AttendeeRegistrationPage = React.lazy(() => import('@/pages/AttendeeRegistrationPage'));
 const SignIn = React.lazy(() => import('@/pages/SignIn'));
 const Register = React.lazy(() => import('@/pages/Register'));
 const AdminLogin = React.lazy(() => import('@/pages/AdminLogin'));
@@ -19,6 +20,7 @@ const StaffDashboard = React.lazy(() => import('@/pages/StaffDashboard'));
 const AdminDashboard = React.lazy(() => import('@/pages/AdminDashboard'));
 const AdminPrintView = React.lazy(() => import('@/pages/AdminPrintView'));
 const NotFound = React.lazy(() => import('@/pages/NotFound'));
+const CheckTicket = React.lazy(() => import('@/pages/CheckTicket'));
 
 // Layout Components
 import { PageLayout, PageTransition } from '@/layout';
@@ -99,6 +101,26 @@ const AppRouter: React.FC = () => {
                 </Suspense>
               </PageTransition>
             </PageLayout>
+          } 
+        />
+        
+        {/* Attendee Registration Page - Standalone (no layout) */}
+        <Route 
+          path="/register-attendee" 
+          element={
+            <Suspense fallback={<LoadingSkeleton />}>
+              <AttendeeRegistrationPage />
+            </Suspense>
+          } 
+        />
+        
+        {/* Check Ticket Page - Standalone (no layout) */}
+        <Route 
+          path="/my-ticket" 
+          element={
+            <Suspense fallback={<LoadingSkeleton />}>
+              <CheckTicket />
+            </Suspense>
           } 
         />
         

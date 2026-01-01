@@ -4,7 +4,8 @@ import { LogIn, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-
+import { useState } from 'react';
+import GeneralRegistrationForm from '@/components/forms/GeneralRegistrationForm';
 /**
  * AdminLogin Component
  * 
@@ -27,6 +28,7 @@ const AdminLogin: React.FC = () => {
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [lockoutTime, setLockoutTime] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
   useEffect(() => {
     if (isLocked && lockoutTime > 0) {
@@ -211,6 +213,28 @@ const AdminLogin: React.FC = () => {
               )}
             </button>
           </form>
+                    {/* Newsletter Link */}
+          <div className={`mt-8 pt-6 border-t text-center ${
+            theme === 'light' ? 'border-gray-200' : 'border-white/10'
+          }`}>
+            <p className={`text-sm ${
+              theme === 'light' ? 'text-gray-500' : 'text-gray-500'
+            }`}>
+              {lang === 'ar' ? 'لست مشرفاً؟ هل تريد البقاء على اطلاع؟' : 'Not an admin? Want to stay updated?'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowRegistrationModal(true)}
+              className={`mt-2 text-sm font-medium transition-colors ${
+                theme === 'light' ? 'text-blue-600 hover:text-blue-700' : 'text-blue-400 hover:text-blue-300'
+              }`}
+            >
+              {lang === 'ar' ? 'سجل للنشرة الإخبارية' : 'Sign up for our newsletter'}
+            </button>
+          </div>
+          {showRegistrationModal && (
+            <GeneralRegistrationForm onClose={() => setShowRegistrationModal(false)} />
+          )}
         </div>
       </div>
     </div>

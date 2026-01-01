@@ -155,3 +155,4 @@ export type AttendeeFormData = z.infer<typeof attendeeSchema>;
 export type SpeakerFormData = z.infer<typeof speakerSchema>;
 export type PartnerFormData = z.infer<typeof partnerSchema>;
 
+3

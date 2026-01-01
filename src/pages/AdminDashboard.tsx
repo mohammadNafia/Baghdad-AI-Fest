@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Mic, Handshake, TrendingUp, Search, ChevronLeft, ChevronRight, LogOut, Printer, FileDown, Sun, Moon, Home } from 'lucide-react';
+import { Users, Mic, Handshake, TrendingUp, Search, ChevronLeft, ChevronRight, LogOut, Printer, FileDown, Sun, Moon, Home, CheckCircle, XCircle, Clock, Settings, UserCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -10,6 +10,9 @@ import { AdminAnalyticsSection } from '@/components/charts/AdminAnalyticsSection
 import { SubmissionHeatmap } from '@/components/charts/SubmissionHeatmap';
 import { exportAttendeesCSV, exportSpeakersCSV, exportPartnersCSV, exportPartnersJSON } from '@/utils/export';
 import StaffManagement from './StaffManagement';
+import SiteContentManager from '@/components/admin/SiteContentManager';
+import SpeakerManager from '@/components/admin/SpeakerManager';
+import { ToastContainer, useToast } from '@/components/ui/Toast';
 import type { 
   AttendeeFormData, 
   SpeakerFormData, 
@@ -23,7 +26,7 @@ import type {
   Lang
 } from '@/types';
 
-type TabType = 'dashboard' | 'attendees' | 'speakers' | 'partners' | 'staff';
+type TabType = 'dashboard' | 'attendees' | 'speakers' | 'partners' | 'staff' | 'content' | 'speakersMgmt';
 type ExportFormat = 'csv' | 'json';
 
 interface AnalyticsData {
@@ -45,6 +48,9 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
+  
+  // Toast notifications
+  const { toasts, dismissToast, success, error } = useToast();
 
   const [attendees, setAttendees] = useState<AttendeeFormData[]>([]);
   const [speakers, setSpeakers] = useState<SpeakerFormData[]>([]);
@@ -215,7 +221,24 @@ const AdminDashboard: React.FC = () => {
     navigate('/admin/login');
   }, [adminLogout, navigate]);
 
-  const tabs = useMemo(() => ['dashboard', 'attendees', 'speakers', 'partners', 'staff'] as TabType[], []);
+  const tabs = useMemo(() => ['dashboard', 'attendees', 'speakers', 'partners', 'staff', 'content', 'speakersMgmt'] as TabType[], []);
+
+  // Tab labels for navigation
+  const getTabLabel = useCallback((tab: TabType) => {
+    const labels: Record<TabType, { en: string; ar: string }> = {
+      dashboard: { en: 'Dashboard', ar: 'لوحة التحكم' },
+      attendees: { en: 'Attendees', ar: 'الحضور' },
+      speakers: { en: 'Speaker Apps', ar: 'طلبات المتحدثين' },
+      partners: { en: 'Partners', ar: 'الشركاء' },
+      staff: { en: 'Staff', ar: 'الموظفين' },
+      content: { en: 'Site Content', ar: 'محتوى الموقع' },
+      speakersMgmt: { en: 'Speakers CMS', ar: 'إدارة المتحدثين' },
+    };
+    return labels[tab]?.[lang] || t?.admin?.[tab] || tab;
+  }, [lang, t]);
+
+  // Venue capacity
+  const VENUE_CAPACITY = 250;
 
   // Safety check - ensure t is available and is an object, not a function
   if (!t || typeof t !== 'object' || !t.admin) {
@@ -230,10 +253,37 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  // Update attendee status
+  const updateAttendeeStatus = useCallback(async (id: string, status: 'approved' | 'rejected' | 'pending') => {
+    try {
+      // Update in localStorage (replace with Supabase call when ready)
+      const existing = JSON.parse(localStorage.getItem('attendees') || '[]');
+      const updated = existing.map((a: AttendeeFormData) => 
+        a.id === id ? { ...a, status } : a
+      );
+      localStorage.setItem('attendees', JSON.stringify(updated));
+      
+      // Update local state
+      setAttendees(prev => prev.map(a => 
+        a.id === id ? { ...a, status } : a
+      ));
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  }, []);
+
+  // Calculate approved seats
+  const approvedSeatsCount = useMemo(() => 
+    attendees.filter(a => a.status === 'approved').length
+  , [attendees]);
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       theme === 'light' ? 'bg-gray-50' : 'bg-[#00040F]'
     }`}>
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      
       {/* Admin Navbar */}
       <nav className={`border-b transition-colors duration-300 ${
         theme === 'light' ? 'bg-white border-gray-200' : 'bg-[#0a0a1a] border-white/10'
@@ -250,7 +300,7 @@ const AdminDashboard: React.FC = () => {
                 <button
                   key={tab}
                   onClick={() => handleTabChange(tab)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                     activeTab === tab
                       ? theme === 'light'
                         ? 'bg-blue-600 text-white'
@@ -260,7 +310,9 @@ const AdminDashboard: React.FC = () => {
                       : 'text-gray-400 hover:bg-white/10'
                   }`}
                 >
-                  {(t?.admin?.[tab] || tab)}
+                  {tab === 'content' && <Settings size={14} />}
+                  {tab === 'speakersMgmt' && <UserCircle size={14} />}
+                  {getTabLabel(tab)}
                 </button>
               ))}
               <button
@@ -610,6 +662,79 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* Seat Counter - Only for attendees tab */}
+            {activeTab === 'attendees' && (
+              <div className={`p-4 rounded-lg border mb-6 ${
+                approvedSeatsCount >= VENUE_CAPACITY
+                  ? theme === 'light' ? 'bg-red-50 border-red-300' : 'bg-red-500/10 border-red-500/30'
+                  : theme === 'light' ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'
+              }`}>
+                {/* Venue Full Warning */}
+                {approvedSeatsCount >= VENUE_CAPACITY && (
+                  <div className={`flex items-center gap-2 mb-3 pb-3 border-b ${
+                    theme === 'light' ? 'border-red-200' : 'border-red-500/30'
+                  }`}>
+                    <AlertTriangle size={20} className={theme === 'light' ? 'text-red-600' : 'text-red-400'} />
+                    <span className={`font-semibold ${theme === 'light' ? 'text-red-700' : 'text-red-400'}`}>
+                      {lang === 'ar' ? '⚠️ المكان ممتلئ! تم الوصول للحد الأقصى من المقاعد.' : '⚠️ Venue Full! Maximum seat capacity reached.'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      approvedSeatsCount >= VENUE_CAPACITY
+                        ? theme === 'light' ? 'bg-red-100' : 'bg-red-600/20'
+                        : theme === 'light' ? 'bg-blue-100' : 'bg-blue-600/20'
+                    }`}>
+                      <Users size={20} className={
+                        approvedSeatsCount >= VENUE_CAPACITY
+                          ? theme === 'light' ? 'text-red-600' : 'text-red-400'
+                          : theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                      } />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${
+                        approvedSeatsCount >= VENUE_CAPACITY
+                          ? theme === 'light' ? 'text-red-800' : 'text-red-300'
+                          : theme === 'light' ? 'text-blue-800' : 'text-blue-300'
+                      }`}>
+                        {lang === 'ar' ? 'المقاعد المؤكدة' : 'Seats Confirmed'}
+                      </p>
+                      <p className={`text-2xl font-bold ${
+                        theme === 'light' ? 'text-gray-900' : 'text-white'
+                      }`}>
+                        {approvedSeatsCount} / {VENUE_CAPACITY}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-40">
+                    <div className={`h-3 rounded-full ${
+                      theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+                    }`}>
+                      <div 
+                        className={`h-full rounded-full transition-all ${
+                          approvedSeatsCount >= VENUE_CAPACITY 
+                            ? 'bg-red-500' 
+                            : approvedSeatsCount >= VENUE_CAPACITY * 0.9
+                            ? 'bg-amber-500'
+                            : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                        }`}
+                        style={{ width: `${Math.min((approvedSeatsCount / VENUE_CAPACITY) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className={`text-xs mt-1 text-right ${
+                      approvedSeatsCount >= VENUE_CAPACITY
+                        ? theme === 'light' ? 'text-red-600' : 'text-red-400'
+                        : theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                    }`}>
+                      {Math.round((approvedSeatsCount / VENUE_CAPACITY) * 100)}% {lang === 'ar' ? 'ممتلئ' : 'filled'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Table */}
             <div className={`rounded-lg border overflow-hidden ${
               theme === 'light' ? 'bg-white border-gray-200' : 'bg-white/5 border-white/10'
@@ -631,10 +756,10 @@ const AdminDashboard: React.FC = () => {
                           }`}>{t.admin.phone}</th>
                           <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${
                             theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                          }`}>{t.admin.occupation}</th>
+                          }`}>{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                           <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${
                             theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                          }`}>{t.admin.dateSubmitted}</th>
+                          }`}>{lang === 'ar' ? 'الإجراءات' : 'Actions'}</th>
                         </>
                       )}
                       {activeTab === 'speakers' && (
@@ -694,12 +819,72 @@ const AdminDashboard: React.FC = () => {
                               <td className={`px-4 py-3 whitespace-nowrap ${
                                 theme === 'light' ? 'text-gray-600' : 'text-gray-400'
                               }`}>{(item as AttendeeFormData).phone || '-'}</td>
-                              <td className={`px-4 py-3 whitespace-nowrap ${
-                                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
-                              }`}>{(item as AttendeeFormData).occupation || '-'}</td>
-                              <td className={`px-4 py-3 whitespace-nowrap ${
-                                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
-                              }`}>{item.dateSubmitted || new Date().toLocaleDateString()}</td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                                  (item as AttendeeFormData).status === 'approved'
+                                    ? theme === 'light' 
+                                      ? 'bg-green-100 text-green-700' 
+                                      : 'bg-green-500/20 text-green-400'
+                                    : (item as AttendeeFormData).status === 'rejected'
+                                    ? theme === 'light'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-red-500/20 text-red-400'
+                                    : theme === 'light'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-amber-500/20 text-amber-400'
+                                }`}>
+                                  {(item as AttendeeFormData).status === 'approved' ? (
+                                    <><CheckCircle size={12} /> {lang === 'ar' ? 'معتمد' : 'Approved'}</>
+                                  ) : (item as AttendeeFormData).status === 'rejected' ? (
+                                    <><XCircle size={12} /> {lang === 'ar' ? 'مرفوض' : 'Rejected'}</>
+                                  ) : (
+                                    <><Clock size={12} /> {lang === 'ar' ? 'قيد المراجعة' : 'Pending'}</>
+                                  )}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  {(item as AttendeeFormData).status !== 'approved' && (
+                                    <button
+                                      onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'approved')}
+                                      disabled={approvedSeatsCount >= MAX_SEATS}
+                                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                                        approvedSeatsCount >= MAX_SEATS
+                                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                          : theme === 'light'
+                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                            : 'bg-green-600 text-white hover:bg-green-500'
+                                      }`}
+                                    >
+                                      {lang === 'ar' ? 'اعتماد' : 'Approve'}
+                                    </button>
+                                  )}
+                                  {(item as AttendeeFormData).status !== 'rejected' && (
+                                    <button
+                                      onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'rejected')}
+                                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                                        theme === 'light'
+                                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                          : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                      }`}
+                                    >
+                                      {lang === 'ar' ? 'رفض' : 'Reject'}
+                                    </button>
+                                  )}
+                                  {(item as AttendeeFormData).status !== 'pending' && (
+                                    <button
+                                      onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'pending')}
+                                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                                        theme === 'light'
+                                          ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                          : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                                      }`}
+                                    >
+                                      {lang === 'ar' ? 'إعادة' : 'Reset'}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
                             </>
                           )}
                           {activeTab === 'speakers' && (
@@ -784,6 +969,22 @@ const AdminDashboard: React.FC = () => {
         {/* Staff Management Tab */}
         {activeTab === 'staff' && (
           <StaffManagement />
+        )}
+
+        {/* Site Content Management Tab */}
+        {activeTab === 'content' && (
+          <SiteContentManager 
+            onSuccess={(msg) => success(msg)}
+            onError={(msg) => error(msg)}
+          />
+        )}
+
+        {/* Speaker CMS Tab */}
+        {activeTab === 'speakersMgmt' && (
+          <SpeakerManager 
+            onSuccess={(msg) => success(msg)}
+            onError={(msg) => error(msg)}
+          />
         )}
       </div>
     </div>

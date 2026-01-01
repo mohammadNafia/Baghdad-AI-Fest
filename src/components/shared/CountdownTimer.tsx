@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Theme } from '@/types';
 
 interface CountdownTimerProps {
+  targetDate?: string;
   theme?: Theme;
 }
 
@@ -12,11 +13,11 @@ interface TimeLeft {
   seconds: number;
 }
 
-export const CountdownTimer: React.FC<CountdownTimerProps> = ({ theme = 'dark' }) => {
+export const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate: targetDateProp, theme = 'dark' }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const targetDate = new Date("April 4, 2026 09:00:00").getTime();
+    const targetDate = new Date(targetDateProp || "April 4, 2026 09:00:00").getTime();
     
     const interval = setInterval(() => {
       const now = new Date().getTime();

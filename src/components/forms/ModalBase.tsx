@@ -78,9 +78,15 @@ const ModalBase: React.FC<ModalBaseProps> = ({ title, onClose, children, theme: 
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto ${
-        theme === 'light' ? 'bg-black/60' : 'bg-black/80'
-      }`}
+      className="bg-black/70 backdrop-blur-md p-4 overflow-y-auto"
+      style={{
+        position: 'fixed',
+        zIndex: 9999,
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -88,15 +94,13 @@ const ModalBase: React.FC<ModalBaseProps> = ({ title, onClose, children, theme: 
     >
       <div
         ref={modalRef}
-        className={`w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh] my-auto ${
+        className={`w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh] ${
           theme === 'light'
             ? 'bg-white border border-blue-200/50 shadow-2xl'
             : 'bg-[#0a0a1a] border border-blue-500/30 shadow-[0_0_50px_rgba(59,130,246,0.2)]'
         }`}
+        style={{ margin: 'auto' }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
       >
         <div className={`p-6 border-b flex justify-between items-center flex-shrink-0 rounded-t-2xl ${
           theme === 'light'

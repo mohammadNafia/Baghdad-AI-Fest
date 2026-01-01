@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, ArrowRight, Users, Mic, Store, Linkedin, Twitter } from 'lucide-react';
+import { ArrowRight, Users, Mic, Store, Linkedin, Twitter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { openGoogleCalendar } from '@/utils/calendarExport';
 import { RevealOnScroll } from '@/components/shared/RevealOnScroll';
 import { CountdownTimer } from '@/components/shared/CountdownTimer';
 import { SectionHeading } from '@/components/shared/SectionHeading';
@@ -12,7 +11,8 @@ import { SummitLogo } from '@/components/SummitLogo';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import { useCounter } from '@/hooks/useCounter';
-import { SPEAKERS } from '@/data/speakers';
+import { useSpeakers } from '@/hooks/useSpeakers';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 /**
  * Attending Now Counter Component
@@ -87,14 +87,8 @@ const AttendingNowCounter = memo(({ theme, lang }) => {
  * 
  * Main hero section of the homepage with parallax scrolling effects,
  * countdown timer, and call-to-action buttons.
- * 
- * @param {Object} props - Component props
- * @param {Object} props.t - Translation object
- * @param {string} props.lang - Current language ('en' or 'ar')
- * @param {string} props.theme - Current theme ('light' or 'dark')
- * @returns {JSX.Element} Hero section component
  */
-const Hero = memo(({ t, lang, theme }) => {
+const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
@@ -103,7 +97,6 @@ const Hero = memo(({ t, lang, theme }) => {
   }, []);
 
   useEffect(() => {
-    // Use requestAnimationFrame for smooth scrolling
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
@@ -130,74 +123,20 @@ const Hero = memo(({ t, lang, theme }) => {
       {/* Particles Background */}
       <ParticlesBackground theme={theme} />
       
-      <div className="absolute inset-0 -z-10">
-        {/* Enhanced parallax layers with different speeds */}
-        <div 
-          className={`ai-aura-orb absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-60 transition-transform duration-75 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-blue-500/40 via-cyan-400/30 to-blue-600/40'
-              : 'bg-gradient-to-br from-blue-300/30 via-cyan-200/20 to-blue-400/30'
-          }`}
-          style={{ 
-            top: '10%', 
-            left: '5%', 
-            transform: `translate3d(0, ${scrollY * 0.5}px, 0) rotate(${scrollY * 0.1}deg)`,
-            willChange: 'transform'
-          }}
-        />
-        <div 
-          className={`ai-aura-orb-reverse absolute w-[700px] h-[700px] rounded-full blur-3xl opacity-60 transition-transform duration-75 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-purple-500/40 via-blue-400/30 to-cyan-500/40'
-              : 'bg-gradient-to-br from-purple-300/30 via-blue-200/20 to-cyan-300/30'
-          }`}
-          style={{ 
-            top: '20%', 
-            right: '5%', 
-            transform: `translate3d(0, ${scrollY * 0.3}px, 0) rotate(${-scrollY * 0.08}deg)`,
-            willChange: 'transform'
-          }}
-        />
-        {/* Additional parallax layer */}
-        <div 
-          className={`absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-40 transition-transform duration-75 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-indigo-500/30 via-purple-400/20 to-pink-500/30'
-              : 'bg-gradient-to-br from-indigo-300/20 via-purple-200/15 to-pink-300/20'
-          }`}
-          style={{ 
-            bottom: '15%', 
-            left: '50%', 
-            transform: `translate3d(-50%, ${scrollY * 0.4}px, 0)`,
-            willChange: 'transform'
-          }}
-        />
-      </div>
+      {theme === 'dark' && (
+        <>
+          <div 
+            className="absolute top-1/4 -left-32 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] animate-pulse-slow"
+            style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+          ></div>
+          <div 
+            className="absolute bottom-1/4 -right-32 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px] animate-pulse-slow delay-1000"
+            style={{ transform: `translateY(${scrollY * -0.1}px)` }}
+          ></div>
+        </>
+      )}
       
-      <div className="absolute inset-0">
-        {theme === 'dark' && (
-          <>
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-1000"></div>
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen"></div>
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay"></div>
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-          </>
-        )}
-        {theme === 'light' && (
-          <>
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-200/30 rounded-full blur-[120px] animate-pulse duration-1000"></div>
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyan-200/20 rounded-full blur-[100px]"></div>
-          </>
-        )}
-      </div>
-
-      <div 
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-16 grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center"
-        style={{
-          transform: `translate3d(0, ${scrollY * 0.1}px, 0)`,
-          willChange: 'transform'
-        }}
-      >
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-16 py-16 md:py-20 lg:py-24 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="space-y-8">
           <RevealOnScroll>
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md text-xs font-medium uppercase tracking-widest ${
@@ -216,51 +155,58 @@ const Hero = memo(({ t, lang, theme }) => {
             <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold leading-[0.95] tracking-tight ${
               theme === 'light' ? 'text-gray-900' : 'text-white'
             }`}>
-              {t.hero.title_prefix} <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600">
-                {t.hero.title_highlight}
+              {getLocalizedSetting('hero_title_prefix', t.hero.title_prefix)} <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500">
+                {getLocalizedSetting('hero_title_highlight', t.hero.title_highlight)}
               </span>
             </h1>
           </RevealOnScroll>
           
           <RevealOnScroll delay={200}>
-            <p className={`text-sm sm:text-base md:text-lg lg:text-xl max-w-lg leading-relaxed font-light ${
-              theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+            <p className={`text-base sm:text-lg md:text-xl max-w-xl leading-relaxed ${
+              theme === 'light' ? 'text-gray-600' : 'text-gray-300'
             }`}>
-              {t.hero.subtitle}
+              {getLocalizedSetting('hero_subtitle', t.hero.subtitle)}
             </p>
           </RevealOnScroll>
-
-          <RevealOnScroll delay={250}>
-            <div className={`border-t pt-6 ${
-              theme === 'light' ? 'border-gray-300' : 'border-white/10'
-            }`}>
-              <p className={`text-xs uppercase tracking-widest mb-2 ${
-                theme === 'light' ? 'text-gray-500' : 'text-gray-500'
-              }`}>{t.hero.countdown_label}</p>
-              <CountdownTimer theme={theme} />
-            </div>
-          </RevealOnScroll>
-
+          
           <RevealOnScroll delay={300}>
-            <div className="flex flex-wrap gap-4 pt-6">
+            <div className="flex flex-wrap gap-4">
               <button 
-                onClick={handleAgendaClick}
-                className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-sm transition-all flex items-center gap-2 min-h-[44px] focus:ring-2 focus:ring-blue-500/70 outline-none ${
-                  theme === 'light'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
-                    : 'bg-white text-black hover:bg-blue-50 active:bg-gray-100'
-                }`}
-                aria-label={t.hero.cta_agenda}
+                onClick={() => navigate('/register-attendee')}
+                className="group bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium text-sm sm:text-base transition-all hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:scale-105 flex items-center gap-2 focus:ring-2 focus:ring-blue-500/70 outline-none"
+                aria-label={lang === 'ar' ? 'سجل الآن' : 'Register Now'}
               >
-                {t.hero.cta_agenda} <ArrowRight size={16} className={lang === 'ar' ? 'rotate-180' : ''} />
+                {lang === 'ar' ? 'سجل الآن' : 'Register Now'}
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button 
+                onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth' })}
+                className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium text-sm sm:text-base transition-all hover:scale-105 flex items-center gap-2 border focus:ring-2 focus:ring-blue-500/70 outline-none ${
+                  theme === 'light'
+                    ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-blue-400'
+                    : 'border-white/20 bg-white/5 text-white hover:bg-white/10'
+                }`}
+                aria-label={lang === 'ar' ? 'جدول الأعمال' : 'View Agenda'}
+              >
+                {lang === 'ar' ? 'جدول الأعمال' : 'View Agenda'}
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </RevealOnScroll>
-        </div>
 
-        <RevealOnScroll delay={400}>
-          <div className="hidden lg:block relative">
+          <RevealOnScroll delay={400}>
+            <div className="pt-4">
+              <p className={`text-xs uppercase tracking-widest mb-3 ${
+                theme === 'light' ? 'text-gray-500' : 'text-gray-400'
+              }`}>{t.hero.countdown_label}</p>
+              <CountdownTimer targetDate="2026-01-27T09:00:00" theme={theme} />
+            </div>
+          </RevealOnScroll>
+        </div>
+        
+        <RevealOnScroll delay={200} className="hidden lg:block">
+          <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-3xl blur-2xl opacity-20"></div>
             <div className="relative bg-[#00040F]/40 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl">
               <div className="grid grid-cols-2 gap-8 mb-8">
@@ -277,20 +223,17 @@ const Hero = memo(({ t, lang, theme }) => {
                   <div className="text-4xl font-bold text-white">25+</div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Workshops</p>
-                  <div className="text-4xl font-bold text-white">15+</div>
+                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">{t.stats.attendees}</p>
+                  <div className="text-4xl font-bold text-white">5K+</div>
                 </div>
               </div>
-              
-              <div className="bg-white/5 rounded-xl p-6 border border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-white">Registration Status</span>
-                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">EARLY BIRD OPEN</span>
+              <div className={`h-px w-full ${theme === 'light' ? 'bg-gray-200' : 'bg-white/10'}`}></div>
+              <div className="mt-8 flex items-center gap-4">
+                <SummitLogo className="w-16 h-16" />
+                <div>
+                  <p className="text-white font-bold">Baghdad AI Summit</p>
+                  <p className="text-gray-400 text-sm">The Station, Baghdad</p>
                 </div>
-                <div className="w-full bg-gray-800 rounded-full h-2 mb-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full w-[65%]"></div>
-                </div>
-                <p className="text-xs text-gray-400 text-right">65% of tickets sold</p>
               </div>
             </div>
           </div>
@@ -376,12 +319,12 @@ const StatCounter = memo(({ end, label, icon: Icon, theme }) => {
 });
 
 // Stats Section
-const StatsSection = memo(({ t, theme }) => {
+const StatsSection = memo(({ t, theme, siteContent, getSetting }) => {
   const stats = useMemo(() => [
-    { end: 5000, label: t.stats.attendees, icon: Users },
-    { end: 120, label: t.stats.speakers, icon: Mic },
-    { end: 100, label: t.stats.exhibitors, icon: Store },
-  ], [t.stats.attendees, t.stats.speakers, t.stats.exhibitors]);
+    { end: getSetting('stats_attendees', 5000), label: t.stats.attendees, icon: Users },
+    { end: getSetting('stats_speakers', 120), label: t.stats.speakers, icon: Mic },
+    { end: getSetting('stats_exhibitors', 100), label: t.stats.exhibitors, icon: Store },
+  ], [t.stats.attendees, t.stats.speakers, t.stats.exhibitors, getSetting, siteContent]);
 
   return (
   <section id="stats" className={`py-24 relative overflow-hidden transition-colors duration-300 ${
@@ -397,7 +340,12 @@ const StatsSection = memo(({ t, theme }) => {
 });
 
 // Speaker Card Component with Framer Motion
-const SpeakerCard = memo(({ speaker, theme, index = 0 }) => {
+const SpeakerCard = memo(({ speaker, theme, index = 0, lang = 'en', getLocalizedSpeaker }) => {
+  // Get localized speaker data if function is provided
+  const localizedSpeaker = getLocalizedSpeaker 
+    ? getLocalizedSpeaker(speaker, lang) 
+    : { name: speaker.name, role: speaker.role, company: speaker.company };
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -422,7 +370,7 @@ const SpeakerCard = memo(({ speaker, theme, index = 0 }) => {
     <div className="aspect-[4/5] overflow-hidden relative">
       <img 
         src={speaker.image} 
-        alt={speaker.name} 
+        alt={localizedSpeaker.name} 
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0" 
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80"></div>
@@ -431,19 +379,19 @@ const SpeakerCard = memo(({ speaker, theme, index = 0 }) => {
         <div className="flex gap-2 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
           <button 
             className="p-2 bg-blue-600 rounded-full text-white hover:bg-blue-500 focus:ring-2 focus:ring-blue-500/70 outline-none" 
-            aria-label={`View ${speaker.name} on LinkedIn`}
+            aria-label={`View ${localizedSpeaker.name} on LinkedIn`}
           >
             <Linkedin size={14} />
           </button>
           <button 
             className="p-2 bg-cyan-500 rounded-full text-white hover:bg-cyan-400 focus:ring-2 focus:ring-cyan-500/70 outline-none" 
-            aria-label={`View ${speaker.name} on Twitter`}
+            aria-label={`View ${localizedSpeaker.name} on Twitter`}
           >
             <Twitter size={14} />
           </button>
         </div>
-        <h3 className="text-xl font-bold text-white mb-1">{speaker.name}</h3>
-        <p className="text-blue-400 text-sm font-medium">{speaker.company}</p>
+        <h3 className="text-xl font-bold text-white mb-1">{localizedSpeaker.name}</h3>
+        <p className="text-blue-400 text-sm font-medium">{localizedSpeaker.company}</p>
       </div>
     </div>
     <div className={`p-4 ${
@@ -451,16 +399,14 @@ const SpeakerCard = memo(({ speaker, theme, index = 0 }) => {
     }`}>
        <p className={`text-xs uppercase tracking-wider ${
          theme === 'light' ? 'text-gray-600' : 'text-gray-400'
-       }`}>{speaker.role}</p>
+       }`}>{localizedSpeaker.role}</p>
     </div>
     </motion.div>
   );
 });
 
-// Speakers Section
-const SpeakersSection = memo(({ t, theme }) => {
-  const speakersList = useMemo(() => SPEAKERS, []);
-
+// Speakers Section - Updated to receive speakers as prop
+const SpeakersSection = memo(({ t, theme, speakers, loading, lang, getLocalizedSpeaker }) => {
   return (
     <section id="speakers" className={`py-24 transition-colors duration-300 ${
       theme === 'light' ? 'bg-gray-50' : 'bg-[#00030a]'
@@ -470,11 +416,38 @@ const SpeakersSection = memo(({ t, theme }) => {
           <SectionHeading title={t.speakers.title} subtitle={t.speakers.subtitle} theme={theme} />
         </RevealOnScroll>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-          {speakersList.map((speaker, idx) => (
-            <SpeakerCard key={speaker.id} speaker={speaker} theme={theme} index={idx} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+            {[...Array(6)].map((_, idx) => (
+              <div 
+                key={idx}
+                className={`rounded-xl overflow-hidden border animate-pulse ${
+                  theme === 'light'
+                    ? 'bg-gray-200 border-gray-200'
+                    : 'bg-white/5 border-white/10'
+                }`}
+              >
+                <div className="aspect-[4/5]"></div>
+                <div className="p-4">
+                  <div className={`h-4 rounded ${theme === 'light' ? 'bg-gray-300' : 'bg-white/10'}`}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+            {speakers.map((speaker, idx) => (
+              <SpeakerCard 
+                key={speaker.id} 
+                speaker={speaker} 
+                theme={theme} 
+                index={idx} 
+                lang={lang}
+                getLocalizedSpeaker={getLocalizedSpeaker}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -492,37 +465,25 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { lang, t } = useLanguage();
+  
+  // Fetch speakers from Supabase (with fallback to static data)
+  const { speakers, loading: speakersLoading, getLocalizedSpeaker } = useSpeakers();
+  
+  // Fetch site content from Supabase CMS
+  const { settings: siteContent, loading: contentLoading, getSetting, getLocalizedSetting } = useSiteContent();
 
-  const handleAgendaNavigation = useCallback(() => {
-    navigate('/agenda');
-  }, [navigate]);
-
-  const handleCalendarClick = useCallback(() => {
-    const event = {
-      title: 'Baghdad AI Summit 2026',
-      description: 'The premier artificial intelligence summit in the Middle East',
-      startDate: new Date('2026-04-04T09:00:00'),
-      endDate: new Date('2026-04-04T18:00:00'),
-      location: "The Station"
-    };
-    try {
-      openGoogleCalendar(event);
-    } catch (error) {
-      console.error('Error opening calendar:', error);
-    }
-  }, []);
-
-  const calendarText = useMemo(() => lang === 'ar' ? 'إضافة إلى التقويم' : 'Add to Calendar', [lang]);
+  const registerText = useMemo(() => lang === 'ar' ? 'سجل الآن مجاناً' : 'Register Now — It\'s Free', [lang]);
 
   return (
     <>
       <AttendingNowCounter theme={theme} lang={lang} />
-      <Hero t={t} lang={lang} theme={theme} />
+      <Hero t={t} lang={lang} theme={theme} siteContent={siteContent} getLocalizedSetting={(key, fallback) => getLocalizedSetting(key, lang, fallback)} />
       <Marquee theme={theme} />
-      <StatsSection t={t} theme={theme} />
-      <SpeakersSection t={t} theme={theme} />
+      <StatsSection t={t} theme={theme} siteContent={siteContent} getSetting={getSetting} />
+      <SpeakersSection t={t} theme={theme} speakers={speakers} loading={speakersLoading} lang={lang} getLocalizedSpeaker={getLocalizedSpeaker} />
       <TestimonialsSection />
       
+      {/* CTA Section */}
       <section className={`py-32 relative overflow-hidden transition-colors duration-300 ${
         theme === 'light' ? 'bg-blue-100/50' : 'bg-blue-900/20'
       }`}>
@@ -537,32 +498,19 @@ const HomePage = () => {
           <h2 className={`text-4xl md:text-6xl font-bold mb-8 tracking-tight ${
             theme === 'light' ? 'text-gray-900' : 'text-white'
           }`}>Ready to shape the future?</h2>
-          <p className={`text-xl mb-10 font-light ${
-            theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-          }`}>Join the most influential minds in AI at the heart of the Middle East.</p>
-          <div className="flex flex-wrap gap-4">
+          <p className={`text-xl mb-12 max-w-2xl mx-auto ${
+            theme === 'light' ? 'text-gray-600' : 'text-gray-300'
+          }`}>
+            Join thousands of innovators, researchers, and industry leaders at the most anticipated AI event in the Middle East.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={handleAgendaNavigation}
-              className={`px-10 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-xl focus:ring-2 focus:ring-blue-500/70 outline-none ${
-                theme === 'light'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-400/30'
-                  : 'bg-white text-black hover:bg-blue-50 shadow-white/10'
-              }`}
-              aria-label="Secure your spot at the summit"
+              onClick={() => navigate('/register-attendee')}
+              className="group bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-10 py-5 rounded-full font-bold text-lg transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] hover:scale-105 flex items-center justify-center gap-3 focus:ring-2 focus:ring-blue-500/70 outline-none"
+              aria-label={registerText}
             >
-              Secure Your Spot
-            </button>
-            <button
-              onClick={handleCalendarClick}
-              className={`px-6 py-4 rounded-full font-medium text-sm transition-all hover:scale-105 border flex items-center gap-2 focus:ring-2 focus:ring-blue-500/70 outline-none ${
-                theme === 'light'
-                  ? 'border-gray-300 bg-white hover:bg-gray-50 text-gray-700'
-                  : 'border-white/20 bg-white/5 hover:bg-white/10 text-white'
-              }`}
-              aria-label={calendarText}
-            >
-              <Calendar size={18} />
-              {calendarText}
+              {registerText}
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
