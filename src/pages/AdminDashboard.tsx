@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Mic, Handshake, TrendingUp, Search, ChevronLeft, ChevronRight, LogOut, Printer, FileDown, Sun, Moon, Home, CheckCircle, XCircle, Clock, Settings, UserCircle, AlertTriangle } from 'lucide-react';
+import { Users, Mic, Handshake, TrendingUp, Search, ChevronLeft, ChevronRight, LogOut, Printer, FileDown, Sun, Moon, Home, CheckCircle, XCircle, Clock, Settings, UserCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { adminAPI } from '@/api/admin';
+import { registrationService } from '@/services/registrationService';
 import { analyticsService } from '@/services/analyticsService';
+import { settingsService } from '@/services/settingsService';
 import { AdminAnalyticsSection } from '@/components/charts/AdminAnalyticsSection';
 import { SubmissionHeatmap } from '@/components/charts/SubmissionHeatmap';
 import { exportAttendeesCSV, exportSpeakersCSV, exportPartnersCSV, exportPartnersJSON } from '@/utils/export';
 import StaffManagement from './StaffManagement';
 import SiteContentManager from '@/components/admin/SiteContentManager';
 import SpeakerManager from '@/components/admin/SpeakerManager';
+import SettingsPanel from '@/components/admin/SettingsPanel';
 import { ToastContainer, useToast } from '@/components/ui/Toast';
 import type { 
   AttendeeFormData, 
@@ -26,7 +28,7 @@ import type {
   Lang
 } from '@/types';
 
-type TabType = 'dashboard' | 'attendees' | 'speakers' | 'partners' | 'staff' | 'content' | 'speakersMgmt';
+type TabType = 'dashboard' | 'attendees' | 'speakers' | 'partners' | 'staff' | 'content' | 'speakersMgmt' | 'settings';
 type ExportFormat = 'csv' | 'json';
 
 interface AnalyticsData {
@@ -39,9 +41,16 @@ interface AnalyticsData {
 
 type SubmissionItem = AttendeeFormData | SpeakerFormData | PartnerFormData;
 
+/**
+ * AdminDashboard - SIMPLIFIED
+ * 
+ * Admin has FULL access to everything.
+ * No granular permission checks needed.
+ * All tabs and features are available to admin.
+ */
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { adminLogout } = useAuth();
+  const { adminLogout, isAdmin } = useAuth();
   const { lang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -67,23 +76,70 @@ const AdminDashboard: React.FC = () => {
   const [heatmapData, setHeatmapData] = useState<SubmissionHeatmapData[]>([]);
   const [averageProcessingTime, setAverageProcessingTime] = useState<number>(0);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState<boolean>(false);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
 
+  // Redirect if not admin
+  useEffect(() => {
+    if (!isAdmin && localStorage.getItem('adminSession') !== 'true') {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [isAdmin, navigate]);
+
+  // Load ALL data from Supabase - admin has full access
   useEffect(() => {
     const loadData = async () => {
-      const [submissionsResult, analyticsResult] = await Promise.all([
-        adminAPI.getAllSubmissions(),
-        adminAPI.getAnalytics()
-      ]);
-      
-      if (submissionsResult.success) {
-        setAttendees(submissionsResult.data?.attendees || []);
-        setSpeakers(submissionsResult.data?.speakers || []);
-        setPartners(submissionsResult.data?.partners || []);
-        setActivityLog(submissionsResult.data?.activityLog || []);
-      }
-      
-      if (analyticsResult.success) {
-        setAnalytics(analyticsResult.data || null);
+      setIsInitialLoading(true);
+      setIsLoadingAnalytics(true);
+      try {
+        console.log('[AdminDashboard] Loading data from Supabase...');
+        const [attendeesResult, speakersResult, partnersResult] = await Promise.all([
+          registrationService.getAllAttendees(),
+          registrationService.getAllSpeakers(),
+          registrationService.getAllPartners()
+        ]);
+        
+        // Always set data, even if empty
+        setAttendees(attendeesResult.data || []);
+        setSpeakers(speakersResult.data || []);
+        setPartners(partnersResult.data || []);
+        
+        console.log('[AdminDashboard] Loaded:', {
+          attendees: attendeesResult.data?.length || 0,
+          speakers: speakersResult.data?.length || 0,
+          partners: partnersResult.data?.length || 0
+        });
+        
+        // Activity log can be built from the data or loaded separately
+        setActivityLog([]);
+        
+        // Basic analytics from counts
+        setAnalytics({
+          totalAttendees: attendeesResult.data?.length || 0,
+          totalSpeakers: speakersResult.data?.length || 0,
+          totalPartners: partnersResult.data?.length || 0,
+          pendingApprovals: (attendeesResult.data || []).filter(a => a.status === 'pending').length +
+                           (speakersResult.data || []).filter(s => s.status === 'pending').length +
+                           (partnersResult.data || []).filter(p => p.status === 'pending').length,
+          approvedCount: (attendeesResult.data || []).filter(a => a.status === 'approved').length +
+                         (speakersResult.data || []).filter(s => s.status === 'approved').length +
+                         (partnersResult.data || []).filter(p => p.status === 'approved').length,
+          rejectedCount: (attendeesResult.data || []).filter(a => a.status === 'rejected').length +
+                         (speakersResult.data || []).filter(s => s.status === 'rejected').length +
+                         (partnersResult.data || []).filter(p => p.status === 'rejected').length
+        });
+        
+        setDataLoaded(true);
+      } catch (err) {
+        console.error('[AdminDashboard] Error loading data:', err);
+        // Set empty arrays for graceful degradation
+        setAttendees([]);
+        setSpeakers([]);
+        setPartners([]);
+        setDataLoaded(true);
+      } finally {
+        setIsInitialLoading(false);
+        setIsLoadingAnalytics(false);
       }
     };
     loadData();
@@ -221,7 +277,7 @@ const AdminDashboard: React.FC = () => {
     navigate('/admin/login');
   }, [adminLogout, navigate]);
 
-  const tabs = useMemo(() => ['dashboard', 'attendees', 'speakers', 'partners', 'staff', 'content', 'speakersMgmt'] as TabType[], []);
+  const tabs = useMemo(() => ['dashboard', 'attendees', 'speakers', 'partners', 'staff', 'content', 'speakersMgmt', 'settings'] as TabType[], []);
 
   // Tab labels for navigation
   const getTabLabel = useCallback((tab: TabType) => {
@@ -233,48 +289,46 @@ const AdminDashboard: React.FC = () => {
       staff: { en: 'Staff', ar: 'الموظفين' },
       content: { en: 'Site Content', ar: 'محتوى الموقع' },
       speakersMgmt: { en: 'Speakers CMS', ar: 'إدارة المتحدثين' },
+      settings: { en: 'Settings', ar: 'الإعدادات' },
     };
     return labels[tab]?.[lang] || t?.admin?.[tab] || tab;
   }, [lang, t]);
 
-  // Venue capacity
-  const VENUE_CAPACITY = 250;
-
-  // Safety check - ensure t is available and is an object, not a function
-  if (!t || typeof t !== 'object' || !t.admin) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-        theme === 'light' ? 'bg-gray-50' : 'bg-[#00040F]'
-      }`}>
-        <div className="text-center">
-          <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>Loading translations...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Update attendee status
+  // Update attendee status in Supabase with auto-refresh
+  // MUST be defined before any early returns to comply with React Hooks rules
   const updateAttendeeStatus = useCallback(async (id: string, status: 'approved' | 'rejected' | 'pending') => {
     try {
-      // Update in localStorage (replace with Supabase call when ready)
-      const existing = JSON.parse(localStorage.getItem('attendees') || '[]');
-      const updated = existing.map((a: AttendeeFormData) => 
-        a.id === id ? { ...a, status } : a
-      );
-      localStorage.setItem('attendees', JSON.stringify(updated));
+      const result = await registrationService.updateAttendeeStatus(id, status);
       
-      // Update local state
-      setAttendees(prev => prev.map(a => 
-        a.id === id ? { ...a, status } : a
-      ));
-    } catch (error) {
-      console.error('Error updating status:', error);
+      if (result.success) {
+        // Refresh attendees list from database
+        const refreshResult = await registrationService.getAllAttendees();
+        if (refreshResult.success) {
+          setAttendees(refreshResult.data || []);
+        } else {
+          // Fallback to local state update if refresh fails
+          setAttendees(prev => prev.map(a => 
+            a.id === id ? { ...a, status } : a
+          ));
+        }
+        success(`Attendee ${status} successfully`);
+      } else {
+        error(`Failed to update status: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      error('Failed to update attendee status');
     }
-  }, []);
+  }, [success, error]);
 
   // Calculate approved seats
   const approvedSeatsCount = useMemo(() => 
     attendees.filter(a => a.status === 'approved').length
+  , [attendees]);
+
+  // Calculate total seats taken (all attendees regardless of status)
+  const totalSeatsTaken = useMemo(() => 
+    attendees.length
   , [attendees]);
 
   return (
@@ -356,6 +410,82 @@ const AdminDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
+            {/* Seats Taken Card - Only visible to admins */}
+            <div className={`p-6 rounded-xl border transition-colors ${
+              totalSeatsTaken >= VENUE_CAPACITY
+                ? theme === 'light' ? 'bg-red-50 border-red-300' : 'bg-red-500/10 border-red-500/30'
+                : theme === 'light' ? 'bg-white border-gray-200' : 'bg-white/5 border-white/10'
+            }`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    totalSeatsTaken >= VENUE_CAPACITY
+                      ? theme === 'light' ? 'bg-red-100' : 'bg-red-600/20'
+                      : theme === 'light' ? 'bg-blue-100' : 'bg-blue-600/20'
+                  }`}>
+                    <Users size={24} className={
+                      totalSeatsTaken >= VENUE_CAPACITY
+                        ? theme === 'light' ? 'text-red-600' : 'text-red-400'
+                        : theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                    } />
+                  </div>
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      theme === 'light' ? 'text-gray-900' : 'text-white'
+                    }`}>
+                      {lang === 'ar' ? 'المقاعد المشغولة' : 'Seats Taken'}
+                    </h3>
+                    {totalSeatsTaken >= VENUE_CAPACITY && (
+                      <p className={`text-sm mt-1 ${
+                        theme === 'light' ? 'text-red-700' : 'text-red-400'
+                      }`}>
+                        {lang === 'ar' ? '⚠️ الحد الأقصى تم الوصول إليه' : '⚠️ Maximum capacity reached'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className={`text-4xl font-bold mb-2 ${
+                    totalSeatsTaken >= VENUE_CAPACITY
+                      ? theme === 'light' ? 'text-red-700' : 'text-red-400'
+                      : theme === 'light' ? 'text-gray-900' : 'text-white'
+                  }`}>
+                    {totalSeatsTaken} / {VENUE_CAPACITY}
+                  </div>
+                  <div className={`text-sm ${
+                    theme === 'light' ? 'text-gray-600' : 'text-gray-400'
+                  }`}>
+                    {lang === 'ar' ? 'إجمالي المسجلين' : 'Total Registered'}
+                  </div>
+                </div>
+                <div className="w-32">
+                  <div className={`h-3 rounded-full ${
+                    theme === 'light' ? 'bg-gray-200' : 'bg-white/10'
+                  }`}>
+                    <div 
+                      className={`h-full rounded-full transition-all ${
+                        totalSeatsTaken >= VENUE_CAPACITY 
+                          ? 'bg-red-500' 
+                          : totalSeatsTaken >= VENUE_CAPACITY * 0.9
+                          ? 'bg-amber-500'
+                          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                      }`}
+                      style={{ width: `${Math.min((totalSeatsTaken / VENUE_CAPACITY) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className={`text-xs mt-1 text-right ${
+                    totalSeatsTaken >= VENUE_CAPACITY
+                      ? theme === 'light' ? 'text-red-600' : 'text-red-400'
+                      : theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                  }`}>
+                    {Math.round((totalSeatsTaken / VENUE_CAPACITY) * 100)}% {lang === 'ar' ? 'ممتلئ' : 'filled'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Analytics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <div className={`p-6 rounded-xl border transition-colors ${
@@ -844,33 +974,39 @@ const AdminDashboard: React.FC = () => {
                               </td>
                               <td className="px-4 py-3 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
-                                  {(item as AttendeeFormData).status !== 'approved' && (
-                                    <button
-                                      onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'approved')}
-                                      disabled={approvedSeatsCount >= MAX_SEATS}
-                                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                                        approvedSeatsCount >= MAX_SEATS
-                                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                          : theme === 'light'
-                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                            : 'bg-green-600 text-white hover:bg-green-500'
-                                      }`}
-                                    >
-                                      {lang === 'ar' ? 'اعتماد' : 'Approve'}
-                                    </button>
+                                  {/* Show Approve and Reject buttons for pending users */}
+                                  {(item as AttendeeFormData).status === 'pending' && (
+                                    <>
+                                      <button
+                                        onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'approved')}
+                                        disabled={approvedSeatsCount >= VENUE_CAPACITY}
+                                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
+                                          approvedSeatsCount >= VENUE_CAPACITY
+                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            : theme === 'light'
+                                              ? 'bg-green-600 text-white hover:bg-green-700'
+                                              : 'bg-green-600 text-white hover:bg-green-500'
+                                        }`}
+                                        title={lang === 'ar' ? 'اعتماد' : 'Approve'}
+                                      >
+                                        <CheckCircle size={14} />
+                                        {lang === 'ar' ? 'اعتماد' : 'Approve'}
+                                      </button>
+                                      <button
+                                        onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'rejected')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
+                                          theme === 'light'
+                                            ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                            : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                        }`}
+                                        title={lang === 'ar' ? 'رفض' : 'Reject'}
+                                      >
+                                        <XCircle size={14} />
+                                        {lang === 'ar' ? 'رفض' : 'Reject'}
+                                      </button>
+                                    </>
                                   )}
-                                  {(item as AttendeeFormData).status !== 'rejected' && (
-                                    <button
-                                      onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'rejected')}
-                                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                                        theme === 'light'
-                                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                          : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                                      }`}
-                                    >
-                                      {lang === 'ar' ? 'رفض' : 'Reject'}
-                                    </button>
-                                  )}
+                                  {/* Show Reset button for non-pending users */}
                                   {(item as AttendeeFormData).status !== 'pending' && (
                                     <button
                                       onClick={() => updateAttendeeStatus((item as AttendeeFormData).id as string, 'pending')}
@@ -982,6 +1118,14 @@ const AdminDashboard: React.FC = () => {
         {/* Speaker CMS Tab */}
         {activeTab === 'speakersMgmt' && (
           <SpeakerManager 
+            onSuccess={(msg) => success(msg)}
+            onError={(msg) => error(msg)}
+          />
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <SettingsPanel 
             onSuccess={(msg) => success(msg)}
             onError={(msg) => error(msg)}
           />

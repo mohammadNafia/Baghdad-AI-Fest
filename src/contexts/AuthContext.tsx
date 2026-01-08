@@ -13,7 +13,12 @@ import { validateStaffCredentials } from '@/services/staffService';
 interface AuthContextType {
   user: User | null;
   userRole: UserRole;
+  /** @deprecated Use isAdmin instead */
   adminLoggedIn: boolean;
+  /** SIMPLIFIED: True if role === 'admin' - grants full access */
+  isAdmin: boolean;
+  /** Check if user has admin privileges */
+  hasAdminAccess: () => boolean;
   token: string | null;
   sessionExpiry: number | null;
   hydrated: boolean;
@@ -44,6 +49,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
   const [adminLoggedIn, setAdminLoggedIn] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<UserRole>('guest');
+
+  /**
+   * SIMPLIFIED: Admin check is now just role === 'admin'
+   * Admin has FULL access to everything - no granular permissions
+   */
+  const isAdmin = userRole === 'admin' || adminLoggedIn;
+
+  /**
+   * Simple function to check admin access
+   * Returns true if user is admin (all-or-nothing)
+   */
+  const hasAdminAccess = (): boolean => {
+    return userRole === 'admin' || adminLoggedIn;
+  };
 
   // Hydrate state from localStorage on mount
   useEffect(() => {
@@ -310,6 +329,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user,
         userRole,
         adminLoggedIn,
+        isAdmin,
+        hasAdminAccess,
         token,
         sessionExpiry,
         hydrated,

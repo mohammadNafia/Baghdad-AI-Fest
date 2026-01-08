@@ -42,7 +42,8 @@ export const CONTENT = {
       speaker_title: "Call for Speakers",
       name: "Full Name",
       occupation: "Occupation Status",
-      institution: "Institution / Company",
+      organization: "Organization / University",
+      institution: "Organization / University",
       age: "Age",
       email: "Email Address",
       phone: "Phone Number",
@@ -52,7 +53,14 @@ export const CONTENT = {
       achievements: "Key Achievements",
       topics: "Proposed Topics",
       submit: "Submit Registration",
-      success: "Registration Received!"
+      success: "Registration Received!",
+      success_title: "Application Received!",
+      success_message: "Due to limited seating, we carefully review each application. You will receive an email notification once your registration status is updated.",
+      check_status_instruction: "You can check your application status anytime using your email",
+      go_to_ticket: "Go to My Ticket Check",
+      newsletter_label: "Keep me updated on future AI events (Newsletter)",
+      pending_status: "Pending Review",
+      select_placeholder: "Select..."
     },
     chatbot: {
       title: "AI Assistant",
@@ -183,7 +191,8 @@ export const CONTENT = {
       speaker_title: "دعوة للمتحدثين",
       name: "الاسم الكامل",
       occupation: "الحالة الوظيفية",
-      institution: "المؤسسة / الشركة",
+      organization: "المنظمة / الجامعة",
+      institution: "المنظمة / الجامعة",
       age: "العمر",
       email: "البريد الإلكتروني",
       phone: "رقم الهاتف",
@@ -193,7 +202,14 @@ export const CONTENT = {
       achievements: "أهم الإنجازات",
       topics: "المواضيع المقترحة",
       submit: "إرسال التسجيل",
-      success: "تم استلام الطلب!"
+      success: "تم استلام الطلب!",
+      success_title: "تم استلام طلبك!",
+      success_message: "نظراً لمحدودية المقاعد، نراجع كل طلب بعناية. ستتلقى إشعاراً بالبريد الإلكتروني عند تحديث حالة تسجيلك.",
+      check_status_instruction: "يمكنك التحقق من حالة طلبك في أي وقت باستخدام بريدك الإلكتروني",
+      go_to_ticket: "الذهاب لفحص تذكرتي",
+      newsletter_label: "أبقني على اطلاع بأحدث فعاليات الذكاء الاصطناعي (النشرة الإخبارية)",
+      pending_status: "قيد المراجعة",
+      select_placeholder: "اختر..."
     },
     chatbot: {
       title: "مساعد الذكاء الاصطناعي",

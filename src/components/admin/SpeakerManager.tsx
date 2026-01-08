@@ -72,11 +72,22 @@ const SpeakerManager: React.FC<SpeakerManagerProps> = ({ onSuccess, onError }) =
 
   const loadSpeakers = async () => {
     setLoading(true);
-    const result = await cmsService.getAllSpeakers();
-    if (result.success && result.data) {
-      setSpeakers(result.data);
-    } else {
-      onError('Failed to load speakers');
+    try {
+      const result = await cmsService.getAllSpeakers();
+      if (result.success) {
+        setSpeakers(result.data || []);
+        // Only show error if explicitly failed, not for empty data
+        if (!result.data || result.data.length === 0) {
+          console.log('[SpeakerManager] No speakers found in database');
+        }
+      } else {
+        console.error('[SpeakerManager] Failed to load speakers:', result.error);
+        // Don't show error toast for empty data, just set empty array
+        setSpeakers([]);
+      }
+    } catch (err) {
+      console.error('[SpeakerManager] Unexpected error loading speakers:', err);
+      setSpeakers([]);
     }
     setLoading(false);
   };

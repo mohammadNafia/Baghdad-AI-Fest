@@ -95,7 +95,8 @@ export interface AttendeeFormData {
   name: string;
   age: number | string;
   occupation: string;
-  institution: string;
+  organization: string;
+  institution?: string; // Deprecated, use organization
   email: string;
   phone: string;
   motivation: string;

@@ -1,31 +1,27 @@
 /**
- * Role-based Routing Utilities
- * Maps user roles to their default routes after login
+ * Role-based Routing Utilities - SIMPLIFIED
+ * 
+ * Admin routes to /admin/dashboard with FULL access
+ * Staff routes to /staff/dashboard with limited access
+ * 
+ * Admin = Super Admin (all-or-nothing access)
  */
 
 import type { UserRole } from '@/types';
 
 /**
  * Role to route mapping
- * Defines where each role should be redirected after login
  */
 export const ROLE_ROUTES: Record<UserRole, string> = {
   guest: '/',
   user: '/',
-  reviewer: '/admin/dashboard', // Reviewers go to admin dashboard
-  staff: '/staff/dashboard',    // Staff go to staff dashboard
-  admin: '/admin/dashboard',    // Admins go to admin dashboard
+  reviewer: '/', // Reviewers go to home (not admin)
+  staff: '/staff/dashboard',
+  admin: '/admin/dashboard', // Admin goes to admin dashboard with FULL access
 };
 
 /**
  * Gets the default route for a user role
- * 
- * @param role - The user's role
- * @returns The route path for that role
- * 
- * @example
- * getRoleRoute('admin') // Returns '/admin/dashboard'
- * getRoleRoute('user')  // Returns '/'
  */
 export function getRoleRoute(role: UserRole): string {
   return ROLE_ROUTES[role] || ROLE_ROUTES.guest;
@@ -33,33 +29,44 @@ export function getRoleRoute(role: UserRole): string {
 
 /**
  * Checks if a route requires authentication
- * 
- * @param path - The route path
- * @returns True if route requires auth
  */
 export function requiresAuth(path: string): boolean {
-  return path.startsWith('/admin') || path.startsWith('/profile');
+  return path.startsWith('/admin') || 
+         path.startsWith('/staff') || 
+         path.startsWith('/profile');
 }
 
 /**
- * Checks if a route requires a specific role
+ * SIMPLIFIED: Checks if a route is accessible by role
  * 
- * @param path - The route path
- * @param role - The user's role
- * @returns True if user can access the route
+ * Admin can access EVERYTHING
+ * Staff can access staff routes
+ * Others can only access public routes
  */
 export function canAccessRoute(path: string, role: UserRole): boolean {
-  // Admin routes require admin, staff, or reviewer
+  // Admin has access to EVERYTHING
+  if (role === 'admin') {
+    return true;
+  }
+  
+  // Admin routes - only admin
   if (path.startsWith('/admin')) {
-    return role === 'admin' || role === 'staff' || role === 'reviewer';
+    return false; // Only admin can access (handled above)
   }
   
-  // Staff routes require staff role
+  // Staff routes - staff only (admin already returned true above)
   if (path.startsWith('/staff')) {
-    return role === 'staff' || role === 'admin';
+    return role === 'staff';
   }
   
-  // Public routes accessible to all
+  // Public routes - everyone
   return true;
+}
+
+/**
+ * Check if user is admin based on role
+ */
+export function isAdminRole(role: UserRole): boolean {
+  return role === 'admin';
 }
 

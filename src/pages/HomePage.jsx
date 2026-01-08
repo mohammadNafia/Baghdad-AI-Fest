@@ -13,6 +13,7 @@ import TestimonialsSection from '@/components/TestimonialsSection';
 import { useCounter } from '@/hooks/useCounter';
 import { useSpeakers } from '@/hooks/useSpeakers';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import { settingsService } from '@/services/settingsService';
 
 /**
  * Attending Now Counter Component
@@ -465,12 +466,32 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { lang, t } = useLanguage();
+  const [showSpeakers, setShowSpeakers] = useState(true);
+  const [checkingSpeakers, setCheckingSpeakers] = useState(true);
   
   // Fetch speakers from Supabase (with fallback to static data)
   const { speakers, loading: speakersLoading, getLocalizedSpeaker } = useSpeakers();
   
   // Fetch site content from Supabase CMS
   const { settings: siteContent, loading: contentLoading, getSetting, getLocalizedSetting } = useSiteContent();
+
+  // Check if speakers should be shown
+  useEffect(() => {
+    const checkShowSpeakers = async () => {
+      setCheckingSpeakers(true);
+      try {
+        const shouldShow = await settingsService.isShowSpeakers();
+        setShowSpeakers(shouldShow);
+      } catch (err) {
+        console.error('Error checking show_speakers setting:', err);
+        // Default to showing if check fails
+        setShowSpeakers(true);
+      } finally {
+        setCheckingSpeakers(false);
+      }
+    };
+    checkShowSpeakers();
+  }, []);
 
   const registerText = useMemo(() => lang === 'ar' ? 'سجل الآن مجاناً' : 'Register Now — It\'s Free', [lang]);
 
@@ -480,7 +501,9 @@ const HomePage = () => {
       <Hero t={t} lang={lang} theme={theme} siteContent={siteContent} getLocalizedSetting={(key, fallback) => getLocalizedSetting(key, lang, fallback)} />
       <Marquee theme={theme} />
       <StatsSection t={t} theme={theme} siteContent={siteContent} getSetting={getSetting} />
-      <SpeakersSection t={t} theme={theme} speakers={speakers} loading={speakersLoading} lang={lang} getLocalizedSpeaker={getLocalizedSpeaker} />
+      {!checkingSpeakers && showSpeakers && (
+        <SpeakersSection t={t} theme={theme} speakers={speakers} loading={speakersLoading} lang={lang} getLocalizedSpeaker={getLocalizedSpeaker} />
+      )}
       <TestimonialsSection />
       
       {/* CTA Section */}

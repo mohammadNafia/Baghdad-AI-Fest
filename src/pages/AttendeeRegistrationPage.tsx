@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { attendeeSchema, type AttendeeFormData } from '@/schemas/formSchemas';
-import { formsAPI } from '@/api/forms';
+import { registrationService } from '@/services/registrationService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Clock, ArrowLeft, Home, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -17,10 +17,12 @@ const AttendeeRegistrationPage: React.FC = () => {
   const { theme } = useTheme();
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [submittedData, setSubmittedData] = useState<AttendeeFormData | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting, touchedFields, isValidating },
     watch
   } = useForm<AttendeeFormData & { newsletter?: boolean }>({
@@ -45,17 +47,36 @@ const AttendeeRegistrationPage: React.FC = () => {
   }, [errors, touchedFields]);
 
   const onSubmit = async (data: AttendeeFormData & { newsletter?: boolean }) => {
+    setSubmitError(null);
+    
     try {
-      const result = await formsAPI.submitAttendee({
-        ...data,
-        status: 'pending' // Add pending status by default
+      console.log('Submitting registration to Supabase:', data);
+      
+      // Submit to Supabase via registrationService
+      const result = await registrationService.submitAttendee({
+        name: data.name,
+        email: data.email.toLowerCase(),
+        phone: data.phone,
+        age: data.age,
+        occupation: data.occupation,
+        organization: data.organization,
+        motivation: data.motivation,
+        newsletter: data.newsletter || false,
       });
+      
       if (result.success) {
+        console.log('Registration submitted successfully to Supabase:', result.data);
+        // Clear the form on success
+        reset();
         setSubmittedData(data);
         setSubmitted(true);
+      } else {
+        console.error('Registration failed:', result.error);
+        setSubmitError(result.error || 'Failed to submit registration');
       }
     } catch (error) {
       console.error('Form submission error:', error);
+      setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -100,7 +121,7 @@ const AttendeeRegistrationPage: React.FC = () => {
                   </div>
                 </div>
                 <h3 className="text-white font-bold text-xl tracking-tight">
-                  {lang === 'ar' ? 'تم استلام طلبك!' : 'Application Received!'}
+                  {t.forms.success_title}
                 </h3>
               </div>
               
@@ -113,7 +134,7 @@ const AttendeeRegistrationPage: React.FC = () => {
                       ? 'bg-amber-100 text-amber-700 border border-amber-200'
                       : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   }`}>
-                    {lang === 'ar' ? '⏳ قيد المراجعة' : '⏳ Pending Review'}
+                    ⏳ {t.forms.pending_status}
                   </span>
                 </div>
 
@@ -139,16 +160,12 @@ const AttendeeRegistrationPage: React.FC = () => {
                   theme === 'light' ? 'text-gray-600' : 'text-gray-300'
                 }`}>
                   <p className="text-sm leading-relaxed">
-                    {lang === 'ar' 
-                      ? 'نظراً لمحدودية المقاعد، نقوم بمراجعة الطلبات بعناية. سنقوم بإعلامك فور تأكيد مقعدك.'
-                      : 'Due to limited seating, we are carefully reviewing applications. We will notify you once your seat is secured.'}
+                    {t.forms.success_message}
                   </p>
                   <p className={`text-xs ${
                     theme === 'light' ? 'text-gray-400' : 'text-gray-500'
                   }`}>
-                    {lang === 'ar' 
-                      ? 'يمكنك التحقق من حالة طلبك في أي وقت'
-                      : 'You can check your application status anytime'}
+                    {t.forms.check_status_instruction}
                   </p>
                 </div>
 
@@ -156,11 +173,13 @@ const AttendeeRegistrationPage: React.FC = () => {
                 <div className="text-center">
                   <button
                     onClick={() => navigate('/my-ticket')}
-                    className={`text-sm font-medium transition-colors ${
-                      theme === 'light' ? 'text-blue-600 hover:text-blue-700' : 'text-blue-400 hover:text-blue-300'
+                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                      theme === 'light'
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
+                        : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30'
                     }`}
                   >
-                    {lang === 'ar' ? 'تحقق من حالة طلبك ←' : 'Check your application status →'}
+                    {t.forms.go_to_ticket} →
                   </button>
                 </div>
               </div>
@@ -349,7 +368,7 @@ const AttendeeRegistrationPage: React.FC = () => {
                       theme === 'light' ? 'text-gray-900' : 'text-white'
                     }`}
                   >
-                    <option value="">{lang === 'ar' ? 'اختر...' : 'Select...'}</option>
+                    <option value="">{t.forms.select_placeholder}</option>
                     <option value="Student">{lang === 'ar' ? 'طالب' : 'Student'}</option>
                     <option value="Employee">{lang === 'ar' ? 'موظف' : 'Employee'}</option>
                     <option value="Self-Employed">{lang === 'ar' ? 'عمل حر' : 'Self-Employed'}</option>
@@ -361,10 +380,10 @@ const AttendeeRegistrationPage: React.FC = () => {
                   )}
                 </div>
                 <Input
-                  label={t.forms.institution}
+                  label={t.forms.organization}
                   type="text"
-                  {...register('institution')}
-                  error={errors.institution?.message}
+                  {...register('organization')}
+                  error={errors.organization?.message}
                   className="focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
@@ -436,9 +455,7 @@ const AttendeeRegistrationPage: React.FC = () => {
                     theme === 'light' ? 'text-gray-500' : 'text-white/60'
                   }`}
                 >
-                  {lang === 'ar' 
-                    ? 'أبقني على اطلاع بأحدث فعاليات الذكاء الاصطناعي (النشرة الإخبارية)' 
-                    : 'Keep me updated on future AI events (Newsletter)'}
+                  {t.forms.newsletter_label}
                 </label>
               </div>
 

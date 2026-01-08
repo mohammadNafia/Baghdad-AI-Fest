@@ -42,11 +42,16 @@ class CMSService {
         .select('*')
         .order('category', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[CMSService] Error fetching settings:', error);
+        // Return empty array with defaults instead of failing
+        return { success: true, data: [] };
+      }
       return { success: true, data: data || [] };
     } catch (error) {
-      console.error('Error fetching settings:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch settings' };
+      console.error('[CMSService] Unexpected error fetching settings:', error);
+      // Return empty array for graceful degradation
+      return { success: true, data: [] };
     }
   }
 
@@ -96,11 +101,15 @@ class CMSService {
         .order('order_index', { ascending: true, nullsFirst: false })
         .order('display_order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[CMSService] Error fetching speakers:', error);
+        // Return empty array for graceful degradation
+        return { success: true, data: [] };
+      }
       return { success: true, data: data || [] };
     } catch (error) {
-      console.error('Error fetching speakers:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch speakers' };
+      console.error('[CMSService] Unexpected error fetching speakers:', error);
+      return { success: true, data: [] };
     }
   }
 
@@ -194,15 +203,18 @@ class CMSService {
   async getApprovedCount(): Promise<{ success: boolean; count?: number; error?: string }> {
     try {
       const { count, error } = await supabase
-        .from('attendee_registrations')
+        .from('attendees')  // CORRECT TABLE NAME
         .select('*', { count: 'exact', head: true })
         .eq('status', 'approved');
 
-      if (error) throw error;
+      if (error) {
+        console.error('[CMSService] Error getting approved count:', error);
+        return { success: true, count: 0 };
+      }
       return { success: true, count: count || 0 };
     } catch (error) {
-      console.error('Error getting approved count:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Failed to get count' };
+      console.error('[CMSService] Unexpected error getting approved count:', error);
+      return { success: true, count: 0 };
     }
   }
 }

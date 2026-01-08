@@ -77,7 +77,8 @@ export const attendeeSchema = z.object({
   }),
   age: z.union([z.string(), z.number()]).transform((val) => {
     if (typeof val === 'string') {
-      const num = parseInt(val, 10);
+      const trimmed = val.trim();
+      const num = parseInt(trimmed, 10);
       return isNaN(num) ? 0 : num;
     }
     return val;
@@ -85,8 +86,8 @@ export const attendeeSchema = z.object({
   occupation: z.string().min(2, {
     message: 'Occupation is required',
   }),
-  institution: z.string().min(2, {
-    message: 'Institution is required',
+  organization: z.string().min(2, {
+    message: 'Organization / University is required',
   }),
   email: z.string().email({
     message: 'Please enter a valid email address',
@@ -97,6 +98,7 @@ export const attendeeSchema = z.object({
   motivation: z.string().min(10, {
     message: 'Please provide your motivation (at least 10 characters)',
   }),
+  newsletter: z.boolean().optional().default(false),
 });
 
 // Speaker Registration Schema

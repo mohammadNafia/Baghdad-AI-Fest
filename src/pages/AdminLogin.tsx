@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useState } from 'react';
+import { authService } from '@/services/authService';
 import GeneralRegistrationForm from '@/components/forms/GeneralRegistrationForm';
+
 /**
- * AdminLogin Component
+ * AdminLogin Component - Supabase Auth Integration
  * 
- * Admin login page with security features including:
- * - Account lockout after failed attempts
- * - Rate limiting
- * - Session management
- * 
- * @returns {JSX.Element} AdminLogin component
+ * Uses real Supabase authentication:
+ * 1. Authenticates with supabase.auth.signInWithPassword()
+ * 2. Fetches profile from 'users' table
+ * 3. Verifies role === 'admin'
+ * 4. Signs out unauthorized users
  */
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { adminLogin } = useAuth();
+  const { isAdmin, login: contextLogin } = useAuth();
   const { lang, t } = useLanguage();
   const { theme } = useTheme();
   const [email, setEmail] = useState<string>('');
@@ -29,6 +29,13 @@ const AdminLogin: React.FC = () => {
   const [lockoutTime, setLockoutTime] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (isAdmin || localStorage.getItem('adminSession') === 'true') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAdmin, navigate]);
 
   useEffect(() => {
     if (isLocked && lockoutTime > 0) {
@@ -60,37 +67,59 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // FIXED: adminLogin now returns a Promise - await it properly
-      const result = await adminLogin(email, password);
+      // Use authService for real Supabase authentication
+      const result = await authService.adminLogin(email, password);
       
-      if (result.success) {
+      if (result.success && result.profile) {
+        console.log('Admin login successful:', result.profile.email);
+        
+        // Update AuthContext with admin session
+        contextLogin({
+          id: result.profile.id,
+          email: result.profile.email,
+          name: result.profile.name,
+          role: 'admin',
+          avatar: result.profile.avatar_url,
+        });
+        
+        // Set admin session in localStorage
+        localStorage.setItem('adminSession', 'true');
+        localStorage.setItem('userRole', 'admin');
+        localStorage.setItem('authToken', result.user?.id || 'admin_token');
+        localStorage.setItem('sessionExpiry', (Date.now() + 24 * 60 * 60 * 1000).toString());
+        
         setAttempts(0);
         
-        // Verify admin session was set in localStorage
-        const adminSession = localStorage.getItem('adminSession');
-        if (adminSession === 'true') {
-          // Navigate immediately - no delays needed
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          setError(lang === 'ar' 
-            ? 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى'
-            : 'Failed to create session. Please try again');
-          setIsLoading(false);
-        }
+        // Navigate to dashboard
+        window.location.href = '/admin/dashboard';
       } else {
+        // Failed login
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         
-        if (newAttempts >= 3) {
+        if (newAttempts >= 5) {
           setIsLocked(true);
-          setLockoutTime(60); // 60 seconds lockout
+          setLockoutTime(60);
           setError(lang === 'ar' 
             ? 'تم حظر الحساب لمدة 60 ثانية بسبب محاولات الدخول الفاشلة المتعددة'
-            : 'Account locked for 60 seconds due to multiple failed login attempts');
+            : 'Account locked for 60 seconds due to multiple failed attempts');
         } else {
+          // Show specific error
+          let errorMessage = result.error || 'Invalid credentials';
+          
+          if (result.error === 'Unauthorized: Admin access required') {
+            errorMessage = lang === 'ar'
+              ? 'غير مصرح: مطلوب صلاحيات المشرف'
+              : 'Unauthorized: Admin access required';
+          } else if (result.error?.includes('Invalid login credentials')) {
+            errorMessage = lang === 'ar'
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+              : 'Invalid email or password';
+          }
+          
           setError(lang === 'ar' 
-            ? `بيانات الدخول غير صحيحة. المحاولات المتبقية: ${3 - newAttempts}`
-            : `Invalid credentials. Attempts remaining: ${3 - newAttempts}`);
+            ? `${errorMessage}. المحاولات المتبقية: ${5 - newAttempts}`
+            : `${errorMessage}. Attempts remaining: ${5 - newAttempts}`);
         }
         setIsLoading(false);
       }
@@ -127,8 +156,17 @@ const AdminLogin: React.FC = () => {
               {t.admin.login}
             </h1>
             <p className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}>
-              {lang === 'ar' ? 'تسجيل الدخول إلى لوحة التحكم' : 'Sign in to access the admin dashboard'}
+              {lang === 'ar' ? 'تسجيل الدخول كمشرف' : 'Sign in as Administrator'}
             </p>
+            {/* Admin Access Notice */}
+            <div className={`mt-4 p-3 rounded-lg text-sm ${
+              theme === 'light' ? 'bg-blue-50 text-blue-700' : 'bg-blue-500/10 text-blue-300'
+            }`}>
+              <AlertCircle size={16} className="inline mr-2" />
+              {lang === 'ar' 
+                ? 'المشرفون لديهم وصول كامل إلى جميع الميزات'
+                : 'Administrators have full access to all features'}
+            </div>
           </div>
 
           {error && (

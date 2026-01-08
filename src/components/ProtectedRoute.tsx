@@ -1,14 +1,17 @@
 /**
- * ProtectedRoute - Role-based route protection
- * Redirects users based on their role and route requirements
+ * ProtectedRoute - SIMPLIFIED Role-based route protection
  * 
- * FIXED: Simplified admin route protection - only checks adminSession
+ * Admin routes: Only check if role === 'admin' (full access)
+ * Staff routes: Check if role === 'staff' or 'admin'
+ * 
+ * NO granular permission checks for admin users.
+ * Admin = Super Admin with full access to everything.
  */
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getRoleRoute, canAccessRoute } from '@/utils/roleRoutes';
+import { getRoleRoute } from '@/utils/roleRoutes';
 import type { UserRole } from '@/types';
 
 interface ProtectedRouteProps {
@@ -18,69 +21,54 @@ interface ProtectedRouteProps {
 }
 
 /**
- * ProtectedRoute component
- * - If no role specified: allows any authenticated user
- * - If requiredRole: only allows that specific role
- * - If allowedRoles: allows any role in the array
+ * ProtectedRoute component - SIMPLIFIED
  * 
- * FIXED: Admin routes now use simple check - adminSession OR adminLoggedIn
+ * For admin routes: Only checks if user is admin (role === 'admin')
+ * Admin has full access to everything - no granular checks needed.
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   requiredRole,
   allowedRoles 
 }) => {
-  const { userRole, user, adminLoggedIn, hydrated } = useAuth();
+  const { userRole, isAdmin, hydrated } = useAuth();
   const location = useLocation();
 
-  // Wait for hydration to complete before checking routes
-  // This prevents race conditions where localStorage hasn't been read yet
+  // Wait for hydration
   if (!hydrated) {
-    return null; // Or a loading spinner
+    return null;
   }
 
-  // FIXED: Admin routes - ONLY allow if adminSession is true
-  // Check both context state AND localStorage for reliability
+  // SIMPLIFIED: Admin routes - just check if admin
   if (location.pathname.startsWith('/admin')) {
+    // Check localStorage as fallback for race conditions
     const isAdminSession = 
-      adminLoggedIn || 
-      localStorage.getItem('adminSession') === 'true';
+      isAdmin || 
+      localStorage.getItem('adminSession') === 'true' ||
+      localStorage.getItem('userRole') === 'admin';
     
     if (!isAdminSession) {
-      // Normal users CANNOT access admin routes - redirect to login
       return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
     
-    // Admin is logged in - allow access
+    // Admin is logged in - FULL ACCESS, no further checks needed
     return <>{children}</>;
   }
 
-  // Staff routes - check permissions
+  // Staff routes - staff or admin can access
   if (location.pathname.startsWith('/staff')) {
-    if (userRole === 'staff' || userRole === 'admin') {
+    if (userRole === 'staff' || isAdmin) {
       return <>{children}</>;
     }
-    // Redirect to staff login if not authorized
     return <Navigate to="/staff/login" state={{ from: location }} replace />;
   }
 
-  // Check role requirements (only for non-admin routes)
-  if (requiredRole) {
-    if (userRole !== requiredRole) {
-      // Redirect to role's default route
-      return <Navigate to={getRoleRoute(userRole)} replace />;
-    }
+  // For other protected routes, use standard role checks
+  if (requiredRole && userRole !== requiredRole && !isAdmin) {
+    return <Navigate to={getRoleRoute(userRole)} replace />;
   }
 
-  if (allowedRoles) {
-    if (!allowedRoles.includes(userRole)) {
-      // Redirect to role's default route
-      return <Navigate to={getRoleRoute(userRole)} replace />;
-    }
-  }
-
-  // Check if user can access the route
-  if (!canAccessRoute(location.pathname, userRole)) {
+  if (allowedRoles && !allowedRoles.includes(userRole) && !isAdmin) {
     return <Navigate to={getRoleRoute(userRole)} replace />;
   }
 
@@ -88,24 +76,49 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 };
 
 /**
- * AdminRoute - Only allows admin, staff, or reviewer
+ * AdminRoute - SIMPLIFIED
+ * Only allows users with role === 'admin'
  */
 export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <ProtectedRoute allowedRoles={['admin', 'staff', 'reviewer']}>
-      {children}
-    </ProtectedRoute>
-  );
+  const { isAdmin, hydrated } = useAuth();
+  const location = useLocation();
+
+  if (!hydrated) {
+    return null;
+  }
+
+  // SIMPLIFIED: Only admin role has access
+  const hasAccess = 
+    isAdmin || 
+    localStorage.getItem('adminSession') === 'true' ||
+    localStorage.getItem('userRole') === 'admin';
+
+  if (!hasAccess) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 /**
- * StaffRoute - Only allows staff or admin
+ * StaffRoute - For staff dashboard
+ * Allows staff OR admin (admin has access to everything)
  */
 export const StaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <ProtectedRoute allowedRoles={['staff', 'admin']}>
-      {children}
-    </ProtectedRoute>
-  );
+  const { userRole, isAdmin, hydrated } = useAuth();
+  const location = useLocation();
+
+  if (!hydrated) {
+    return null;
+  }
+
+  // Staff or admin can access staff routes
+  if (userRole === 'staff' || isAdmin) {
+    return <>{children}</>;
+  }
+
+  return <Navigate to="/staff/login" state={{ from: location }} replace />;
 };
+
+export default ProtectedRoute;
 
