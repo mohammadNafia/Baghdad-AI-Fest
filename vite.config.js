@@ -20,17 +20,13 @@ export default defineConfig({
     exclude: [],
   },
   build: {
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
+    outDir: 'dist',
+    target: 'esnext',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Ensure react/jsx-runtime is bundled with react
-          if (id.includes('react/jsx-runtime') || id.includes('react-jsx-runtime')) {
-            return 'react-vendor'
-          }
+          // Optimize chunk splitting for better caching
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
             return 'react-vendor'
           }
@@ -43,7 +39,5 @@ export default defineConfig({
         },
       },
     },
-    target: 'esnext',
-    minify: 'esbuild',
   },
 })
