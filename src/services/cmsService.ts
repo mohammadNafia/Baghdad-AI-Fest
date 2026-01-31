@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { supabase, isSupabaseConfigured } from '@/lib/SupabaseClient';
+=======
+import { supabase } from '@/lib/SupabaseClient';
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 
 export interface SiteSetting {
   id?: string;
@@ -31,6 +35,7 @@ export interface CMSSpeaker {
 }
 
 class CMSService {
+<<<<<<< HEAD
   // Local fallback helpers ---------------------------------------------------
   private readList<T = any>(key: string): T[] {
     try {
@@ -57,17 +62,22 @@ class CMSService {
     }
   }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
   // ============================================================================
   // SITE SETTINGS
   // ============================================================================
 
   async getAllSettings(): Promise<{ success: boolean; data?: SiteSetting[]; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const data = this.readList<SiteSetting>('site_settings');
         return { success: true, data };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data, error } = await supabase
         .from('site_settings')
         .select('*')
@@ -88,6 +98,7 @@ class CMSService {
 
   async updateSetting(key: string, value: string): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const settings = this.readList<SiteSetting>('site_settings');
         const idx = settings.findIndex(s => s.key === key);
@@ -98,6 +109,8 @@ class CMSService {
         return { success: true };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { error } = await supabase
         .from('site_settings')
         .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
@@ -112,6 +125,7 @@ class CMSService {
 
   async bulkUpdateSettings(settings: { key: string; value: string }[]): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const current = this.readList<SiteSetting>('site_settings');
         const merged = [...current];
@@ -125,6 +139,8 @@ class CMSService {
         return { success: true };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const updates = settings.map(s => ({
         key: s.key,
         value: s.value,
@@ -149,11 +165,14 @@ class CMSService {
 
   async getAllSpeakers(): Promise<{ success: boolean; data?: CMSSpeaker[]; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const speakers = this.readList<CMSSpeaker>('speakers');
         return { success: true, data: speakers };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data, error } = await supabase
         .from('speakers')
         .select('*')
@@ -174,6 +193,7 @@ class CMSService {
 
   async createSpeaker(speaker: Omit<CMSSpeaker, 'id'>): Promise<{ success: boolean; data?: CMSSpeaker; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const speakers = this.readList<CMSSpeaker>('speakers');
         const newSpeaker = { ...speaker, id: `local-speaker-${Date.now()}` };
@@ -182,6 +202,8 @@ class CMSService {
         return { success: true, data: newSpeaker };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data, error } = await supabase
         .from('speakers')
         .insert([speaker])
@@ -198,6 +220,7 @@ class CMSService {
 
   async updateSpeaker(id: string, speaker: Partial<CMSSpeaker>): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const speakers = this.readList<CMSSpeaker>('speakers');
         const idx = speakers.findIndex(s => String(s.id) === String(id));
@@ -207,6 +230,8 @@ class CMSService {
         return { success: true };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { error } = await supabase
         .from('speakers')
         .update({ ...speaker, updated_at: new Date().toISOString() })
@@ -222,12 +247,15 @@ class CMSService {
 
   async deleteSpeaker(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const speakers = this.readList<CMSSpeaker>('speakers').filter(s => String(s.id) !== String(id));
         this.writeList('speakers', speakers);
         return { success: true };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { error } = await supabase
         .from('speakers')
         .delete()
@@ -243,6 +271,7 @@ class CMSService {
 
   async reorderSpeakers(speakerIds: string[]): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const speakers = this.readList<CMSSpeaker>('speakers');
         const idSet = new Set(speakerIds);
@@ -258,6 +287,8 @@ class CMSService {
         return { success: true };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       for (let i = 0; i < speakerIds.length; i++) {
         const { error } = await supabase
           .from('speakers')
@@ -280,12 +311,15 @@ class CMSService {
 
   async getVenueCapacity(): Promise<{ success: boolean; capacity?: number; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const settings = this.readList<SiteSetting>('site_settings');
         const found = settings.find(s => s.key === 'max_attendees');
         return { success: true, capacity: parseInt(found?.value || '250', 10) };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
@@ -305,12 +339,15 @@ class CMSService {
 
   async getApprovedCount(): Promise<{ success: boolean; count?: number; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         const attendees = this.readList<any>('attendees');
         const count = attendees.filter(a => a.status === 'approved').length;
         return { success: true, count };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { count, error } = await supabase
         .from('attendees')  // CORRECT TABLE NAME
         .select('*', { count: 'exact', head: true })

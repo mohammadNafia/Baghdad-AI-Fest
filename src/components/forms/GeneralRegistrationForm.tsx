@@ -31,6 +31,7 @@ const GeneralRegistrationForm: React.FC<GeneralRegistrationFormProps> = ({ onClo
     formState: { errors, isSubmitting },
   } = useForm<AttendeeFormData & { newsletter?: boolean }>({
     resolver: zodResolver(attendeeSchema),
+<<<<<<< HEAD
     mode: 'onChange',
     defaultValues: {
       occupation: 'Student',
@@ -38,6 +39,9 @@ const GeneralRegistrationForm: React.FC<GeneralRegistrationFormProps> = ({ onClo
       organization: '',
       newsletter: false,
     }
+=======
+    mode: 'onChange'
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
   });
 
   // Check if registrations are open
@@ -129,7 +133,11 @@ const GeneralRegistrationForm: React.FC<GeneralRegistrationFormProps> = ({ onClo
             <h2 className={`text-2xl font-bold ${
               theme === 'light' ? 'text-gray-900' : 'text-white'
             }`}>
+<<<<<<< HEAD
               {lang === 'ar' ? 'تم تأكيد تسجيلك' : 'Registration Confirmed'}
+=======
+              {lang === 'ar' ? 'تم استلام طلبك بنجاح' : 'Application Received'}
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
             </h2>
             <p className={`text-base leading-relaxed max-w-sm ${
               theme === 'light' ? 'text-gray-600' : 'text-gray-300'

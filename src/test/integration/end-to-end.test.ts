@@ -37,7 +37,10 @@ describe('End-to-End Integration Tests', () => {
 
   beforeEach(() => {
     mockDb = createMockDatabase();
+<<<<<<< HEAD
     vi.restoreAllMocks();
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
     vi.clearAllMocks();
   });
 

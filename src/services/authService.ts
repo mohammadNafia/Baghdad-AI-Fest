@@ -7,7 +7,11 @@
  * - Profile management
  */
 
+<<<<<<< HEAD
 import { supabase, isSupabaseConfigured } from '@/lib/SupabaseClient';
+=======
+import { supabase } from '@/lib/SupabaseClient';
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface UserProfile {
@@ -35,6 +39,7 @@ class AuthService {
    * 2. Fetches user profile from 'users' table
    * 3. Verifies role === 'admin'
    * 4. Signs out if not admin
+<<<<<<< HEAD
   */
   async adminLogin(email: string, password: string): Promise<AuthResult> {
     try {
@@ -56,6 +61,11 @@ class AuthService {
         }
         return { success: false, error: 'Auth service not configured' };
       }
+=======
+   */
+  async adminLogin(email: string, password: string): Promise<AuthResult> {
+    try {
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       // Step 1: Authenticate with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -131,12 +141,18 @@ class AuthService {
 
   /**
    * Staff Login - Authenticates and verifies staff or admin role
+<<<<<<< HEAD
   */
   async staffLogin(email: string, password: string): Promise<AuthResult> {
     try {
       if (!isSupabaseConfigured()) {
         return { success: false, error: 'Auth service not configured' };
       }
+=======
+   */
+  async staffLogin(email: string, password: string): Promise<AuthResult> {
+    try {
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -192,9 +208,12 @@ class AuthService {
    */
   async userLogin(email: string, password: string): Promise<AuthResult> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         return { success: false, error: 'Auth service not configured' };
       }
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -260,9 +279,12 @@ class AuthService {
    */
   async signOut(): Promise<{ success: boolean; error?: string }> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         return { success: true };
       }
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { error } = await supabase.auth.signOut();
       if (error) {
         return { success: false, error: error.message };
@@ -282,9 +304,12 @@ class AuthService {
    */
   async getSession() {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         return { session: null, error: 'Auth service not configured' };
       }
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         return { session: null, error: error.message };
@@ -300,9 +325,12 @@ class AuthService {
    */
   async getCurrentUserProfile(): Promise<UserProfile | null> {
     try {
+<<<<<<< HEAD
       if (!isSupabaseConfigured()) {
         return null;
       }
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
@@ -329,9 +357,12 @@ class AuthService {
    * Listen to auth state changes
    */
   onAuthStateChange(callback: (event: string, session: any) => void) {
+<<<<<<< HEAD
     if (!isSupabaseConfigured()) {
       return { data: { subscription: null }, unsubscribe: () => {} };
     }
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
     return supabase.auth.onAuthStateChange(callback);
   }
 }

@@ -16,6 +16,7 @@ export interface RegistrationResult {
   error?: string;
 }
 
+<<<<<<< HEAD
 // ---------------------------------------------------------------------------
 // Local fallback store (used when Supabase isn't configured or during tests)
 // ---------------------------------------------------------------------------
@@ -106,6 +107,8 @@ const normalizePartner = (data: Partial<PartnerFormData>) => {
   };
 };
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 class RegistrationService {
   /**
    * Get total attendee count (all statuses)
@@ -113,8 +116,12 @@ class RegistrationService {
   async getTotalAttendeeCount(): Promise<{ success: boolean; count?: number; error?: string }> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const local = readLocal('attendees');
         return { success: true, count: local.length };
+=======
+        return { success: true, count: 0 };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       const { count, error } = await supabase
@@ -139,6 +146,14 @@ class RegistrationService {
    */
   async submitAttendee(formData: Partial<AttendeeFormData>): Promise<RegistrationResult> {
     try {
+<<<<<<< HEAD
+=======
+      if (!isSupabaseConfigured()) {
+        console.error('[RegistrationService] Supabase not configured');
+        return { success: false, error: 'Database not configured' };
+      }
+
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       // Check current attendee count before allowing registration
       const MAX_CAPACITY = 250;
       const countResult = await this.getTotalAttendeeCount();
@@ -156,6 +171,7 @@ class RegistrationService {
         };
       }
 
+<<<<<<< HEAD
       // Local fallback when Supabase isn't configured (or in offline mode)
       if (!isSupabaseConfigured()) {
         const attendees = readLocal('attendees');
@@ -169,6 +185,8 @@ class RegistrationService {
         return { success: true, data: newAttendee };
       }
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       console.log('[RegistrationService] Submitting attendee:', formData);
       
       const { data, error } = await supabase
@@ -222,6 +240,7 @@ class RegistrationService {
   async submitSpeaker(formData: Partial<SpeakerFormData>): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const speakers = readLocal('speakers');
         const newSpeaker = normalizeSpeaker({
           ...formData,
@@ -230,6 +249,10 @@ class RegistrationService {
         speakers.unshift(newSpeaker);
         writeLocal('speakers', speakers);
         return { success: true, data: newSpeaker };
+=======
+        console.error('[RegistrationService] Supabase not configured');
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Submitting speaker:', formData);
@@ -274,6 +297,7 @@ class RegistrationService {
   async submitPartner(formData: Partial<PartnerFormData>): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const partners = readLocal('partners');
         const newPartner = normalizePartner({
           ...formData,
@@ -282,6 +306,10 @@ class RegistrationService {
         partners.unshift(newPartner);
         writeLocal('partners', partners);
         return { success: true, data: newPartner };
+=======
+        console.error('[RegistrationService] Supabase not configured');
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Submitting partner:', formData);
@@ -322,8 +350,13 @@ class RegistrationService {
   async getAllAttendees(): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const data = readLocal('attendees').map(normalizeAttendee);
         return { success: true, data };
+=======
+        console.warn('[RegistrationService] Supabase not configured, returning empty array');
+        return { success: true, data: [] };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Fetching all attendees...');
@@ -354,8 +387,13 @@ class RegistrationService {
   async getAllSpeakers(): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const data = readLocal('speakers').map(normalizeSpeaker);
         return { success: true, data };
+=======
+        console.warn('[RegistrationService] Supabase not configured, returning empty array');
+        return { success: true, data: [] };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Fetching all speakers...');
@@ -385,8 +423,13 @@ class RegistrationService {
   async getAllPartners(): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const data = readLocal('partners').map(normalizePartner);
         return { success: true, data };
+=======
+        console.warn('[RegistrationService] Supabase not configured, returning empty array');
+        return { success: true, data: [] };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Fetching all partners...');
@@ -415,6 +458,7 @@ class RegistrationService {
   async updateAttendeeStatus(id: string, status: 'approved' | 'rejected' | 'pending'): Promise<RegistrationResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const attendees = readLocal('attendees').map(normalizeAttendee);
         const idx = attendees.findIndex(a => String(a.id) === String(id));
         if (idx === -1) {
@@ -427,10 +471,15 @@ class RegistrationService {
         };
         writeLocal('attendees', attendees);
         return { success: true, data: attendees[idx] };
+=======
+        console.error('[RegistrationService] Supabase not configured');
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[RegistrationService] Updating attendee status:', id, status);
       
+<<<<<<< HEAD
       const query = supabase
         .from('attendees')  // CORRECT TABLE NAME
         .update({ status, updated_at: new Date().toISOString() })
@@ -451,6 +500,22 @@ class RegistrationService {
 
       console.log('[RegistrationService] Status updated successfully:', result?.data);
       return { success: true, data: result?.data };
+=======
+      const { data, error } = await supabase
+        .from('attendees')  // CORRECT TABLE NAME
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[RegistrationService] Error updating status:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log('[RegistrationService] Status updated successfully:', data);
+      return { success: true, data };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
     } catch (error) {
       console.error('[RegistrationService] Unexpected error updating status:', error);
       return {
@@ -466,9 +531,13 @@ class RegistrationService {
   async getApprovedCount(): Promise<{ success: boolean; count?: number; error?: string }> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const attendees = readLocal('attendees').map(normalizeAttendee);
         const count = attendees.filter(a => a.status === 'approved').length;
         return { success: true, count };
+=======
+        return { success: true, count: 0 };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       const { count, error } = await supabase
@@ -493,6 +562,7 @@ class RegistrationService {
    */
   async findAttendeeByEmail(email: string): Promise<RegistrationResult> {
     try {
+<<<<<<< HEAD
       const normalizedEmail = email.toLowerCase().trim();
 
       // Local fallback first when Supabase isn't configured
@@ -523,6 +593,20 @@ class RegistrationService {
       const result = filtered?.single ? await filtered.single() : filtered;
       const data = result?.data || (Array.isArray(result?.data) ? result.data[0] : undefined) || result?.[0];
       const error = result?.error;
+=======
+      if (!isSupabaseConfigured()) {
+        console.error('[RegistrationService] Supabase not configured');
+        return { success: false, error: 'Database not configured' };
+      }
+
+      console.log('[RegistrationService] Searching for attendee:', email);
+      
+      const { data, error } = await supabase
+        .from('attendees')  // CORRECT TABLE NAME
+        .select('*')
+        .eq('email', email.toLowerCase().trim())
+        .single();
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 
       if (error) {
         if (error.code === 'PGRST116') {

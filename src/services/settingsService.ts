@@ -14,6 +14,7 @@ export interface SettingsResult {
   error?: string;
 }
 
+<<<<<<< HEAD
 // Local fallback storage for settings when Supabase isn't configured
 const SETTINGS_KEY = 'site_settings';
 const DEFAULT_SETTINGS = [
@@ -50,6 +51,8 @@ const writeSettings = (settings: { key: string; value: string }[]) => {
   }
 };
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 class SettingsService {
   /**
    * Get a specific setting value
@@ -57,9 +60,13 @@ class SettingsService {
   async getSetting(key: string): Promise<{ success: boolean; value?: string; error?: string }> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const settings = readSettings();
         const found = settings.find((item) => item.key === key);
         return { success: true, value: found?.value };
+=======
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       const { data, error } = await supabase
@@ -93,12 +100,16 @@ class SettingsService {
   async getAllSettings(): Promise<SettingsResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const settings = readSettings();
         const mapped: Record<string, string> = {};
         settings.forEach((row) => {
           mapped[row.key] = row.value;
         });
         return { success: true, data: mapped };
+=======
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       const { data, error } = await supabase
@@ -135,6 +146,7 @@ class SettingsService {
   async updateSetting(key: string, value: string): Promise<SettingsResult> {
     try {
       if (!isSupabaseConfigured()) {
+<<<<<<< HEAD
         const settings = readSettings();
         const idx = settings.findIndex((item) => item.key === key);
         const updated = { key, value, updated_at: new Date().toISOString() };
@@ -142,6 +154,9 @@ class SettingsService {
         else settings[idx] = updated;
         writeSettings(settings);
         return { success: true, data: updated };
+=======
+        return { success: false, error: 'Database not configured' };
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
       }
 
       console.log('[SettingsService] Updating setting:', key, value);

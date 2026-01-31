@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { forwardRef, InputHTMLAttributes, useId } from 'react';
+=======
+import React, { forwardRef, InputHTMLAttributes } from 'react';
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -14,8 +18,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, className = '', ...props }, ref) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
+<<<<<<< HEAD
     const generatedId = useId();
     const inputId = props.id || generatedId;
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 
     const inputClasses = `w-full px-3 py-2 rounded-lg border transition-colors ${
       error
@@ -32,7 +39,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
+<<<<<<< HEAD
           <label htmlFor={inputId} className={`block text-sm font-medium mb-1.5 ${
+=======
+          <label className={`block text-sm font-medium mb-1.5 ${
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
             isDark ? 'text-gray-300' : 'text-gray-700'
           }`}>
             {label}
@@ -41,7 +52,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
+<<<<<<< HEAD
           id={inputId}
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
           className={inputClasses}
           {...props}
         />
@@ -61,3 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660

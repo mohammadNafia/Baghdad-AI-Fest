@@ -41,8 +41,11 @@ interface AnalyticsData {
 
 type SubmissionItem = AttendeeFormData | SpeakerFormData | PartnerFormData;
 
+<<<<<<< HEAD
 const VENUE_CAPACITY = 250;
 
+=======
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
 /**
  * AdminDashboard - SIMPLIFIED
  * 
@@ -1138,3 +1141,7 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660

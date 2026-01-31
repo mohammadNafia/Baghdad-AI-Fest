@@ -196,7 +196,11 @@ describe('AdminDashboard', () => {
             name: 'Test User',
             email: 'test@example.com',
             phone: '1234567890',
+<<<<<<< HEAD
             status: 'pending',
+=======
+            status: 'approved',
+>>>>>>> 0006e50519a9394e9dd4814976b32663b3186660
           },
         ],
       });
