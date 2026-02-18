@@ -1,7 +1,9 @@
 name: baghdad-ai-summit
 region: nyc
+
+# Backend API Service
 services:
-- name: baghdad-ai-summit2
+- name: api
   github:
     repo: Muammal/Baghdad-ai-summit
     branch: main
@@ -12,11 +14,28 @@ services:
   instance_count: 1
   instance_size_slug: basic-xxs
   routes:
-  - path: /
+  - path: /api
   health_check:
-    http_path: /health
+    http_path: /api/health
   envs:
   - key: ASPNETCORE_ENVIRONMENT
     value: Production
+
+# Frontend Service
+- name: frontend
+  github:
+    repo: Muammal/Baghdad-ai-summit
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: front-end/Dockerfile
+  source_dir: front-end
+  http_port: 80
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  routes:
+  - path: /
+  envs:
+  - key: VITE_API_URL
+    value: https://aidevfest-site-777jj.ondigitalocean.app/api
   # PORT is automatically set by DigitalOcean - don't override ASPNETCORE_URLS
   # The Dockerfile will use PORT env var: http://+:${PORT:-8080}
