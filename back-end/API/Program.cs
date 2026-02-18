@@ -209,6 +209,9 @@ try
     // Controllers
     app.MapControllers();
 
+    // Root route - redirect to Swagger UI
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+
     // Apply migrations and seed data on startup
     try
     {
