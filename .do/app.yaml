@@ -35,8 +35,8 @@ services:
   instance_size_slug: basic-xxs
   routes:
   - path: /
+  build_command: |
+    docker build --build-arg VITE_API_URL=https://aidevfest-site-777jj.ondigitalocean.app/api -t frontend .
   envs:
   - key: VITE_API_URL
     value: https://aidevfest-site-777jj.ondigitalocean.app/api
-  - key: NODE_ENV
-    value: production
