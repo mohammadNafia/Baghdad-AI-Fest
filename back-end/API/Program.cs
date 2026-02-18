@@ -228,6 +228,15 @@ try
     //     app.UseHttpsRedirection();
     // }
 
+    // Handle path base from DigitalOcean routing rules (if any)
+    // This allows the app to work with or without path prefixes
+    var pathBase = Environment.GetEnvironmentVariable("PATH_BASE");
+    if (!string.IsNullOrEmpty(pathBase))
+    {
+        app.UsePathBase(pathBase);
+        Log.Information($"Using path base: {pathBase}");
+    }
+
     // CORS
     app.UseCors("AllowAll");
 
@@ -249,8 +258,8 @@ try
     // Controllers
     app.MapControllers();
 
-    // Root route - return API information
-    app.MapGet("/", () => Results.Json(new
+    // Helper function to return API info
+    static object GetApiInfo() => new
     {
         message = "Baghdad AI Summit API",
         version = "v1",
@@ -263,7 +272,14 @@ try
             health = "/health",
             api = "/api"
         }
-    }));
+    };
+
+    // Root route - return API information
+    app.MapGet("/", () => Results.Json(GetApiInfo()));
+    
+    // Also handle /baghdad-ai-summit2 path (in case DigitalOcean routing rule is set)
+    app.MapGet("/baghdad-ai-summit2", () => Results.Json(GetApiInfo()));
+    app.MapGet("/baghdad-ai-summit2/", () => Results.Json(GetApiInfo()));
 
     // Apply migrations and seed data on startup
     try
