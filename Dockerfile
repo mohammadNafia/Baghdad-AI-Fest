@@ -1,50 +1,36 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+FROM node:18.20.8-alpine AS build
 
-# Copy solution file first
-COPY ["back-end/BaghdadAISummit.sln", "back-end/"]
-
-# Copy project files for dependency restoration
-COPY ["back-end/Domain/Domain.csproj", "back-end/Domain/"]
-COPY ["back-end/Infrastructure/Infrastructure.csproj", "back-end/Infrastructure/"]
-COPY ["back-end/Application/Application.csproj", "back-end/Application/"]
-COPY ["back-end/API/API.csproj", "back-end/API/"]
-
-# Restore dependencies
-WORKDIR /src/back-end
-RUN dotnet restore "BaghdadAISummit.sln"
-
-# Copy remaining source files
-COPY ["back-end/", "."]
-
-# Build the solution
-WORKDIR "/src/back-end/API"
-RUN dotnet build "API.csproj" -c Release -o /app/build
-
-# Publish stage
-FROM build AS publish
-RUN dotnet publish "API.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Create logs directory
-RUN mkdir -p /app/logs
+# Copy package files
+COPY package*.json ./
 
-# Copy published files
-COPY --from=publish /app/publish .
+# Install dependencies
+RUN npm ci
+
+# Copy source files
+COPY . .
+
+# Set build-time environment variables (Vite needs these at build time)
+# Default to production API URL, can be overridden by build args
+ARG VITE_API_URL=https://aidevfest-site-777jj.ondigitalocean.app/api
+ENV VITE_API_URL=$VITE_API_URL
+
+# Build the application
+RUN npm run build
+
+# Production stage - serve with nginx
+FROM nginx:alpine
+
+# Copy built files from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 80
 
-# Set environment variables
-ENV ASPNETCORE_ENVIRONMENT=Production
-# PORT environment variable will be set by DigitalOcean
-# ASPNETCORE_URLS will be set dynamically in Program.cs to use PORT
-# Default binding to 0.0.0.0 (all interfaces) is required for external access
-
-# Run the application
-ENTRYPOINT ["dotnet", "API.dll"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
