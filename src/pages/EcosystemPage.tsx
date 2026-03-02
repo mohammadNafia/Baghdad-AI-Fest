@@ -143,7 +143,7 @@ type FormState = 'idle' | 'sending' | 'success' | 'error';
 
 const ContactSection: React.FC<{ theme: string; lang: string }> = ({ theme, lang }) => {
   const [formState, setFormState] = useState<FormState>('idle');
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [form, setForm] = useState({ from_name: '', from_email: '', message: '' });
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -166,7 +166,7 @@ const ContactSection: React.FC<{ theme: string; lang: string }> = ({ theme, lang
       // ─────────────────────────────────────────────────────────────────────
 
       setFormState('success');
-      setForm({ name: '', email: '', message: '' });
+      setForm({ from_name: '', from_email: '', message: '' });
     } catch {
       setFormState('error');
     }
@@ -232,7 +232,7 @@ const ContactSection: React.FC<{ theme: string; lang: string }> = ({ theme, lang
                     <input
                       type="text"
                       name="from_name"
-                      value={form.name}
+                      value={form.from_name}
                       onChange={handleChange}
                       placeholder={lang === 'ar' ? 'اسمك الكامل' : 'Your full name'}
                       required
@@ -249,7 +249,7 @@ const ContactSection: React.FC<{ theme: string; lang: string }> = ({ theme, lang
                     <input
                       type="email"
                       name="from_email"
-                      value={form.email}
+                      value={form.from_email}
                       onChange={handleChange}
                       placeholder={lang === 'ar' ? 'بريدك الإلكتروني' : 'your@email.com'}
                       required
