@@ -45,7 +45,15 @@ const AgendaTimeline: React.FC<AgendaTimelineProps> = ({ theme }) => (
               <div className={`flex items-center gap-2 mt-4 text-xs uppercase tracking-widest ${idx % 2 !== 0 && 'md:justify-end'} ${
                 theme === 'light' ? 'text-gray-500' : 'text-gray-500'
               }`}>
-                 <div className={`w-2 h-2 rounded-full ${item.type === 'Keynote' ? 'bg-indigo-500' : item.type === 'Panel' ? 'bg-blue-500' : 'bg-cyan-500'}`}></div>
+                 <div className={`w-2 h-2 rounded-full ${
+                   item.type === 'Keynote'     ? 'bg-indigo-500' :
+                   item.type === 'Panel'       ? 'bg-blue-500' :
+                   item.type === 'Workshop'    ? 'bg-purple-500' :
+                   item.type === 'Competition' ? 'bg-orange-500' :
+                   item.type === 'Break'       ? 'bg-gray-400' :
+                   item.type === 'Expo'        ? 'bg-teal-500' :
+                   'bg-cyan-500'
+                 }`}></div>
                  {item.type}
               </div>
             </div>
@@ -73,7 +81,7 @@ const AgendaPage: React.FC = () => {
       theme === 'light' ? 'bg-white' : 'bg-[#00040F]'
     }`}>
       <div className="max-w-7xl mx-auto px-6">
-        <SectionHeading title="Summit Agenda" subtitle="Three days of immersive learning and networking." theme={theme} />
+        <SectionHeading title="Summit Agenda" subtitle="April 4, 2026 • The Station, Baghdad" theme={theme} />
         <AgendaTimeline theme={theme} />
       </div>
     </div>

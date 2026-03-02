@@ -11,20 +11,18 @@ import { SummitLogo } from '@/components/SummitLogo';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import { useCounter } from '@/hooks/useCounter';
-import { useSpeakers } from '@/hooks/useSpeakers';
-import { useSiteContent } from '@/hooks/useSiteContent';
-import { settingsService } from '@/services/settingsService';
+
+const SPEAKERS = [
+  { id: 1, name: "Dr. Amira Al-Baghdadi", role: "Chief AI Scientist", company: "Future Iraq Tech", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" },
+  { id: 2, name: "Prof. John Neural", role: "Director of Robotics", company: "Global AI Systems", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400" },
+  { id: 3, name: "Layla Hassan", role: "Founder", company: "Tigris Valley Ventures", image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400" },
+  { id: 4, name: "Tariq Jameel", role: "Ethical AI Lead", company: "OpenMinds", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400" },
+  { id: 5, name: "Sarah Chen", role: "VP Engineering", company: "DataFlow", image: "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&q=80&w=400" },
+  { id: 6, name: "Omar Farooq", role: "CEO", company: "Baghdad CyberSec", image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400" }
+];
 
 /**
  * Attending Now Counter Component
- * 
- * Displays a live counter showing the number of people currently viewing the page.
- * Updates every 15 seconds with a smooth animation.
- * 
- * @param {Object} props - Component props
- * @param {string} props.theme - Current theme ('light' or 'dark')
- * @param {string} props.lang - Current language ('en' or 'ar')
- * @returns {JSX.Element} Attending now counter component
  */
 const AttendingNowCounter = memo(({ theme, lang }) => {
   const [count, setCount] = useState(() => Math.floor(Math.random() * 221) + 30);
@@ -85,11 +83,8 @@ const AttendingNowCounter = memo(({ theme, lang }) => {
 
 /**
  * Hero Component
- * 
- * Main hero section of the homepage with parallax scrolling effects,
- * countdown timer, and call-to-action buttons.
  */
-const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
+const Hero = memo(({ t, lang, theme }) => {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
@@ -113,15 +108,10 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [handleScroll]);
 
-  const handleAgendaClick = useCallback(() => {
-    navigate('/agenda');
-  }, [navigate]);
-
   return (
     <div className={`relative min-h-screen flex items-center pt-20 overflow-hidden transition-colors duration-300 ${
       theme === 'light' ? 'bg-gradient-to-br from-blue-50 to-white' : 'bg-[#00040F]'
     }`}>
-      {/* Particles Background */}
       <ParticlesBackground theme={theme} />
       
       {theme === 'dark' && (
@@ -156,9 +146,9 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
             <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold leading-[0.95] tracking-tight ${
               theme === 'light' ? 'text-gray-900' : 'text-white'
             }`}>
-              {getLocalizedSetting('hero_title_prefix', t.hero.title_prefix)} <br/>
+              {t.hero.title_prefix} <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500">
-                {getLocalizedSetting('hero_title_highlight', t.hero.title_highlight)}
+                {t.hero.title_highlight}
               </span>
             </h1>
           </RevealOnScroll>
@@ -167,18 +157,17 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
             <p className={`text-base sm:text-lg md:text-xl max-w-xl leading-relaxed ${
               theme === 'light' ? 'text-gray-600' : 'text-gray-300'
             }`}>
-              {getLocalizedSetting('hero_subtitle', t.hero.subtitle)}
+              {t.hero.subtitle}
             </p>
           </RevealOnScroll>
           
           <RevealOnScroll delay={300}>
             <div className="flex flex-wrap gap-4">
               <button 
-                onClick={() => navigate('/register-attendee')}
+                onClick={() => navigate('/contact')}
                 className="group bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium text-sm sm:text-base transition-all hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:scale-105 flex items-center gap-2 focus:ring-2 focus:ring-blue-500/70 outline-none"
-                aria-label={lang === 'ar' ? 'سجل الآن' : 'Register Now'}
               >
-                {lang === 'ar' ? 'سجل الآن' : 'Register Now'}
+                {lang === 'ar' ? 'تواصل معنا' : 'Contact Us'}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
@@ -188,7 +177,6 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
                     ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-blue-400'
                     : 'border-white/20 bg-white/5 text-white hover:bg-white/10'
                 }`}
-                aria-label={lang === 'ar' ? 'جدول الأعمال' : 'View Agenda'}
               >
                 {lang === 'ar' ? 'جدول الأعمال' : 'View Agenda'}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -201,7 +189,7 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
               <p className={`text-xs uppercase tracking-widest mb-3 ${
                 theme === 'light' ? 'text-gray-500' : 'text-gray-400'
               }`}>{t.hero.countdown_label}</p>
-              <CountdownTimer targetDate="2026-01-27T09:00:00" theme={theme} />
+              <CountdownTimer targetDate="2026-04-04T09:00:00" theme={theme} />
             </div>
           </RevealOnScroll>
         </div>
@@ -213,19 +201,19 @@ const Hero = memo(({ t, lang, theme, siteContent, getLocalizedSetting }) => {
               <div className="grid grid-cols-2 gap-8 mb-8">
                 <div>
                   <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">{t.stats.speakers}</p>
-                  <div className="text-4xl font-bold text-white">120+</div>
+                  <div className="text-4xl font-bold text-white">30+</div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Startups</p>
+                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Partners</p>
+                  <div className="text-4xl font-bold text-white">20+</div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Exhibitors</p>
                   <div className="text-4xl font-bold text-white">50+</div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Countries</p>
-                  <div className="text-4xl font-bold text-white">25+</div>
-                </div>
-                <div>
                   <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">{t.stats.attendees}</p>
-                  <div className="text-4xl font-bold text-white">5K+</div>
+                  <div className="text-4xl font-bold text-white">1K+</div>
                 </div>
               </div>
               <div className={`h-px w-full ${theme === 'light' ? 'bg-gray-200' : 'bg-white/10'}`}></div>
@@ -320,12 +308,12 @@ const StatCounter = memo(({ end, label, icon: Icon, theme }) => {
 });
 
 // Stats Section
-const StatsSection = memo(({ t, theme, siteContent, getSetting }) => {
+const StatsSection = memo(({ t, theme }) => {
   const stats = useMemo(() => [
-    { end: getSetting('stats_attendees', 5000), label: t.stats.attendees, icon: Users },
-    { end: getSetting('stats_speakers', 120), label: t.stats.speakers, icon: Mic },
-    { end: getSetting('stats_exhibitors', 100), label: t.stats.exhibitors, icon: Store },
-  ], [t.stats.attendees, t.stats.speakers, t.stats.exhibitors, getSetting, siteContent]);
+    { end: 1000, label: t.stats.attendees, icon: Users },
+    { end: 32, label: t.stats.speakers, icon: Mic },
+    { end: 50, label: t.stats.exhibitors, icon: Store },
+  ], [t.stats.attendees, t.stats.speakers, t.stats.exhibitors]);
 
   return (
   <section id="stats" className={`py-24 relative overflow-hidden transition-colors duration-300 ${
@@ -340,13 +328,8 @@ const StatsSection = memo(({ t, theme, siteContent, getSetting }) => {
   );
 });
 
-// Speaker Card Component with Framer Motion
-const SpeakerCard = memo(({ speaker, theme, index = 0, lang = 'en', getLocalizedSpeaker }) => {
-  // Get localized speaker data if function is provided
-  const localizedSpeaker = getLocalizedSpeaker 
-    ? getLocalizedSpeaker(speaker, lang) 
-    : { name: speaker.name, role: speaker.role, company: speaker.company };
-  
+// Speaker Card Component
+const SpeakerCard = memo(({ speaker, theme, index = 0 }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -371,28 +354,14 @@ const SpeakerCard = memo(({ speaker, theme, index = 0, lang = 'en', getLocalized
     <div className="aspect-[4/5] overflow-hidden relative">
       <img 
         src={speaker.image} 
-        alt={localizedSpeaker.name} 
+        alt={speaker.name} 
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0" 
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80"></div>
       
       <div className="absolute bottom-4 left-4 right-4 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-        <div className="flex gap-2 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-          <button 
-            className="p-2 bg-blue-600 rounded-full text-white hover:bg-blue-500 focus:ring-2 focus:ring-blue-500/70 outline-none" 
-            aria-label={`View ${localizedSpeaker.name} on LinkedIn`}
-          >
-            <Linkedin size={14} />
-          </button>
-          <button 
-            className="p-2 bg-cyan-500 rounded-full text-white hover:bg-cyan-400 focus:ring-2 focus:ring-cyan-500/70 outline-none" 
-            aria-label={`View ${localizedSpeaker.name} on Twitter`}
-          >
-            <Twitter size={14} />
-          </button>
-        </div>
-        <h3 className="text-xl font-bold text-white mb-1">{localizedSpeaker.name}</h3>
-        <p className="text-blue-400 text-sm font-medium">{localizedSpeaker.company}</p>
+        <h3 className="text-xl font-bold text-white mb-1">{speaker.name}</h3>
+        <p className="text-blue-400 text-sm font-medium">{speaker.company}</p>
       </div>
     </div>
     <div className={`p-4 ${
@@ -400,14 +369,14 @@ const SpeakerCard = memo(({ speaker, theme, index = 0, lang = 'en', getLocalized
     }`}>
        <p className={`text-xs uppercase tracking-wider ${
          theme === 'light' ? 'text-gray-600' : 'text-gray-400'
-       }`}>{localizedSpeaker.role}</p>
+       }`}>{speaker.role}</p>
     </div>
     </motion.div>
   );
 });
 
-// Speakers Section - Updated to receive speakers as prop
-const SpeakersSection = memo(({ t, theme, speakers, loading, lang, getLocalizedSpeaker }) => {
+// Speakers Section
+const SpeakersSection = memo(({ t, theme }) => {
   return (
     <section id="speakers" className={`py-24 transition-colors duration-300 ${
       theme === 'light' ? 'bg-gray-50' : 'bg-[#00030a]'
@@ -417,38 +386,16 @@ const SpeakersSection = memo(({ t, theme, speakers, loading, lang, getLocalizedS
           <SectionHeading title={t.speakers.title} subtitle={t.speakers.subtitle} theme={theme} />
         </RevealOnScroll>
         
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {[...Array(6)].map((_, idx) => (
-              <div 
-                key={idx}
-                className={`rounded-xl overflow-hidden border animate-pulse ${
-                  theme === 'light'
-                    ? 'bg-gray-200 border-gray-200'
-                    : 'bg-white/5 border-white/10'
-                }`}
-              >
-                <div className="aspect-[4/5]"></div>
-                <div className="p-4">
-                  <div className={`h-4 rounded ${theme === 'light' ? 'bg-gray-300' : 'bg-white/10'}`}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {speakers.map((speaker, idx) => (
-              <SpeakerCard 
-                key={speaker.id} 
-                speaker={speaker} 
-                theme={theme} 
-                index={idx} 
-                lang={lang}
-                getLocalizedSpeaker={getLocalizedSpeaker}
-              />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+          {SPEAKERS.map((speaker, idx) => (
+            <SpeakerCard 
+              key={speaker.id} 
+              speaker={speaker} 
+              theme={theme} 
+              index={idx} 
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -456,57 +403,20 @@ const SpeakersSection = memo(({ t, theme, speakers, loading, lang, getLocalizedS
 
 /**
  * HomePage Component
- * 
- * Main landing page component for the Baghdad AI Summit.
- * Includes hero section, stats, speakers, testimonials, and call-to-action sections.
- * 
- * @returns {JSX.Element} HomePage component
  */
 const HomePage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { lang, t } = useLanguage();
-  const [showSpeakers, setShowSpeakers] = useState(true);
-  const [checkingSpeakers, setCheckingSpeakers] = useState(true);
-  
-  // Fetch speakers from Supabase (with fallback to static data)
-  const { speakers, loading: speakersLoading, getLocalizedSpeaker } = useSpeakers();
-  
-  // Fetch site content from Supabase CMS
-  const { settings: siteContent, loading: contentLoading, getSetting, getLocalizedSetting } = useSiteContent();
-
-  // Check if speakers should be shown
-  useEffect(() => {
-    const checkShowSpeakers = async () => {
-      setCheckingSpeakers(true);
-      try {
-        const shouldShow = await settingsService.isShowSpeakers();
-        setShowSpeakers(shouldShow);
-      } catch (err) {
-        console.error('Error checking show_speakers setting:', err);
-        // Default to showing if check fails
-        setShowSpeakers(true);
-      } finally {
-        setCheckingSpeakers(false);
-      }
-    };
-    checkShowSpeakers();
-  }, []);
-
-  const registerText = useMemo(() => lang === 'ar' ? 'سجل الآن مجاناً' : 'Register Now — It\'s Free', [lang]);
 
   return (
     <>
       <AttendingNowCounter theme={theme} lang={lang} />
-      <Hero t={t} lang={lang} theme={theme} siteContent={siteContent} getLocalizedSetting={(key, fallback) => getLocalizedSetting(key, lang, fallback)} />
+      <Hero t={t} lang={lang} theme={theme} />
       <Marquee theme={theme} />
-      <StatsSection t={t} theme={theme} siteContent={siteContent} getSetting={getSetting} />
-      {!checkingSpeakers && showSpeakers && (
-        <SpeakersSection t={t} theme={theme} speakers={speakers} loading={speakersLoading} lang={lang} getLocalizedSpeaker={getLocalizedSpeaker} />
-      )}
+      <StatsSection t={t} theme={theme} />
       <TestimonialsSection />
       
-      {/* CTA Section */}
       <section className={`py-32 relative overflow-hidden transition-colors duration-300 ${
         theme === 'light' ? 'bg-blue-100/50' : 'bg-blue-900/20'
       }`}>
@@ -528,11 +438,10 @@ const HomePage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => navigate('/register-attendee')}
+              onClick={() => navigate('/contact')}
               className="group bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-10 py-5 rounded-full font-bold text-lg transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] hover:scale-105 flex items-center justify-center gap-3 focus:ring-2 focus:ring-blue-500/70 outline-none"
-              aria-label={registerText}
             >
-              {registerText}
+              {lang === 'ar' ? 'تواصل معنا' : 'Contact Us'}
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

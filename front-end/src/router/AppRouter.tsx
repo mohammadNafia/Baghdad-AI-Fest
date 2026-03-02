@@ -1,25 +1,17 @@
-import React, { Suspense, ReactNode } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { GeneralErrorBoundary, AdminErrorBoundary } from '@/components/common/ErrorBoundary';
-import { AdminRoute, StaffRoute } from '@/components/ProtectedRoute';
+import { GeneralErrorBoundary } from '@/components/common/ErrorBoundary';
 
 // Pages - Lazy loaded for better performance
 const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const AboutPage = React.lazy(() => import('@/pages/AboutPage'));
 const AgendaPage = React.lazy(() => import('@/pages/AgendaPage'));
 const EcosystemPage = React.lazy(() => import('@/pages/EcosystemPage'));
-const AttendeeRegistrationPage = React.lazy(() => import('@/pages/AttendeeRegistrationPage'));
-const Login = React.lazy(() => import('@/pages/Login'));
-const SignUp = React.lazy(() => import('@/pages/SignUp'));
-const Register = React.lazy(() => import('@/pages/Register'));
-const StaffDashboard = React.lazy(() => import('@/pages/StaffDashboard'));
-const AdminDashboard = React.lazy(() => import('@/pages/AdminDashboard'));
-const AdminPrintView = React.lazy(() => import('@/pages/AdminPrintView'));
+const ContactPage = React.lazy(() => import('@/pages/ContactPage'));
 const NotFound = React.lazy(() => import('@/pages/NotFound'));
-const CheckTicket = React.lazy(() => import('@/pages/CheckTicket'));
+
 
 // Layout Components
 import { PageLayout, PageTransition } from '@/layout';
@@ -42,12 +34,6 @@ const LoadingSkeleton: React.FC = () => {
   );
 };
 
-// Legacy ProtectedAdminRoute - kept for backward compatibility
-// Now uses the new ProtectedRoute component
-const ProtectedAdminRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
-  return <AdminRoute>{children}</AdminRoute>;
-};
-
 // Router Component
 const AppRouter: React.FC = () => {
   return (
@@ -65,6 +51,10 @@ const AppRouter: React.FC = () => {
               </PageTransition>
             </PageLayout>
           } 
+        />
+        <Route 
+          path="/home" 
+          element={<Navigate to="/" replace />}
         />
         <Route 
           path="/about" 
@@ -91,6 +81,19 @@ const AppRouter: React.FC = () => {
           } 
         />
         <Route 
+          path="/contact" 
+          element={
+            <PageLayout>
+              <PageTransition>
+                <Suspense fallback={<LoadingSkeleton />}>
+                  <ContactPage />
+                </Suspense>
+              </PageTransition>
+            </PageLayout>
+          } 
+        />
+        
+        <Route 
           path="/ecosystem" 
           element={
             <PageLayout>
@@ -100,84 +103,6 @@ const AppRouter: React.FC = () => {
                 </Suspense>
               </PageTransition>
             </PageLayout>
-          } 
-        />
-        
-        {/* Attendee Registration Page - Standalone (no layout) */}
-        <Route 
-          path="/register-attendee" 
-          element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <AttendeeRegistrationPage />
-            </Suspense>
-          } 
-        />
-        
-        {/* Check Ticket Page - Standalone (no layout) */}
-        <Route 
-          path="/my-ticket" 
-          element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <CheckTicket />
-            </Suspense>
-          } 
-        />
-        
-        {/* Auth Routes - No Layout */}
-        <Route 
-          path="/signin" 
-          element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <Login />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/signup" 
-          element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <SignUp />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <SignUp />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/staff/dashboard" 
-          element={
-            <StaffRoute>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <StaffDashboard />
-              </Suspense>
-            </StaffRoute>
-          } 
-        />
-        <Route 
-          path="/admin/dashboard" 
-          element={
-            <AdminErrorBoundary>
-              <ProtectedAdminRoute>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <AdminDashboard />
-                </Suspense>
-              </ProtectedAdminRoute>
-            </AdminErrorBoundary>
-          } 
-        />
-        <Route 
-          path="/admin/print" 
-          element={
-            <ProtectedAdminRoute>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <AdminPrintView />
-              </Suspense>
-            </ProtectedAdminRoute>
           } 
         />
         
@@ -208,9 +133,7 @@ const AppWithProviders: React.FC = () => {
     <GeneralErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
-          <AuthProvider>
-            <AppRouter />
-          </AuthProvider>
+          <AppRouter />
         </LanguageProvider>
       </ThemeProvider>
     </GeneralErrorBoundary>

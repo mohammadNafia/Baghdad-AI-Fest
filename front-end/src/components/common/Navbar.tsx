@@ -214,30 +214,16 @@ const Navbar: React.FC = () => {
               {lang === 'en' ? 'العربية' : 'English'}
             </button>
 
-            {/* Sign In / Sign Up Buttons - Only show when not logged in */}
+            {/* Apply Here Button */}
             {(!user && !adminLoggedIn) ? (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => navigate('/signin')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    theme === 'light'
-                      ? 'text-gray-700 hover:text-blue-600 border border-gray-300 hover:border-blue-500 bg-transparent hover:bg-blue-50'
-                      : 'text-gray-300 hover:text-white border border-white/20 hover:border-white/40 bg-transparent hover:bg-white/10'
-                  }`}
-                >
-                  {lang === 'ar' ? 'تسجيل الدخول' : 'Log In'}
-                </button>
-                <button
-                  onClick={() => navigate('/signup')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    theme === 'light'
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg'
-                      : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]'
-                  }`}
-                >
-                  {lang === 'ar' ? 'إنشاء حساب' : 'Sign Up'}
-                </button>
-              </div>
+              <a
+                href="https://forms.gle/62zB4DukHodznX9K8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2 rounded-full text-sm font-semibold transition-all bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.55)] hover:scale-105"
+              >
+                {lang === 'ar' ? 'تقدم الآن' : 'Apply Here'}
+              </a>
             ) : (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -376,33 +362,16 @@ const Navbar: React.FC = () => {
                 {/* Mobile Auth Section */}
                 <motion.div variants={menuItemVariants} className="pt-4">
                   {(!user && !adminLoggedIn) ? (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => {
-                          navigate('/signin');
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full py-3 rounded-xl font-medium text-center transition-all ${
-                          theme === 'light'
-                            ? 'text-gray-700 hover:text-blue-600 border border-gray-300 hover:border-blue-500 bg-transparent hover:bg-blue-50'
-                            : 'text-gray-300 hover:text-white border border-white/20 hover:border-white/40 bg-transparent hover:bg-white/10'
-                        }`}
+                    <div>
+                      <a
+                        href="https://forms.gle/62zB4DukHodznX9K8"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full py-3 rounded-xl font-semibold text-center transition-all bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg"
                       >
-                        {lang === 'ar' ? 'تسجيل الدخول' : 'Log In'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/signup');
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full py-3 rounded-xl font-medium text-center transition-all ${
-                          theme === 'light'
-                            ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg'
-                            : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]'
-                        }`}
-                      >
-                        {lang === 'ar' ? 'إنشاء حساب' : 'Sign Up'}
-                      </button>
+                        {lang === 'ar' ? 'تقدم الآن' : 'Apply Here'}
+                      </a>
                     </div>
                   ) : (
                     <div className="space-y-2">
