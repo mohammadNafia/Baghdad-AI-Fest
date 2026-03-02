@@ -103,7 +103,7 @@ const AboutPage: React.FC = () => {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur-lg opacity-40" />
               <img
-                src="public/Ancient.jpg"
+                src="/Ancient.jpg"
                 alt={lang === 'ar' ? 'بلاد الرافدين القديمة نحو المستقبل' : 'Ancient Mesopotamia meets Future'}
                 className={`relative rounded-2xl shadow-2xl border grayscale hover:grayscale-0 transition-all duration-700 ${
                   theme === 'light' ? 'border-gray-200' : 'border-white/10'
